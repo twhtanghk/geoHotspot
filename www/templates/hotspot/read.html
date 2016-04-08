@@ -1,0 +1,50 @@
+<ion-view>
+	<ion-nav-buttons class="item-input-inset">
+	    <h1 class='title'>Wifi Hotspot</h1>
+	    <button class="button button-clear button-positive" ng-click="edit('{{model.id}}')">Edit</button>
+	</ion-nav-buttons>
+	<ion-content>
+		<ion-list>
+				<div class='row'>
+					<div class="col-md-4">
+						<span class="input-label cell-titleWidth">Name</span>
+					</div>
+					<div class="col-md-8">					
+						<span class="input-label cell-width">{{model.name}}</span>
+					</div>
+				</div>	
+				<div class='row'>
+					<div class="col-md-4">
+						<span class="input-label cell-titleWidth">Latitude</span>
+					</div>
+					<div class="col-md-8">	
+						<span class="input-label cell-width">{{model.latitude}}</span>
+					</div>				
+				</div>
+				<div class='row' style='padding-top:10px;'>
+					<div class="col-md-4" >
+						<span class="input-label cell-titleWidth">Longitude</span>
+					</div>
+					<div class="col-md-8">					
+						<span class="input-label cell-width">{{model.longitude}}</span>
+					</div>
+				</div>
+				<div class='row' style='padding-top:10px;'>
+					<div class="col-md-4" >
+						<span class="input-label cell-titleWidth">Address</span>
+					</div>
+					<div class="col-md-8">					
+						<span class="input-label cell-width">{{model.address}}</span>
+					</div>	
+				</div>
+				<div class='row' style='padding-top:10px;'>
+					<div class="col-md-4" >
+						<span class="input-label cell-titleWidth">Tag</span>
+					</div>
+					<div class="col-md-8">					
+						<span style="display:inline-block;height:24px;margin:0 7px 0 0;background-color:#ffab40;color:#fff;padding:0 5px;border-radius:2px;font-size:14px;line-height:24px;cursor:default;transition:box-shadow 100ms linear;" ng-repeat="tag in model.tags">{{tag.name}}</span>
+					</div>	
+				</div>				
+		</ion-list>
+	</ion-content>
+</ion-view>

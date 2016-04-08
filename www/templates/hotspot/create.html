@@ -1,0 +1,65 @@
+<ion-view>
+
+	<ion-nav-buttons class="item-input-inset">
+	    <h1 class='title'>Wifi Hotspot</h1>
+	    <button class="button button-clear button-positive" ng-click="save()">OK</button>
+	</ion-nav-buttons>
+
+	<ion-content>
+		<ion-list>
+				<div class='row'>
+					<div class="col-md-4">
+						<span class="input-label" style='width:200px'>Name</span>
+					</div>
+					<div class="col-md-8">	
+						<label class="item item-input">
+							<input type="text" ng-model="model.name" required>
+						</label>
+					</div>	
+				</div>	
+				<div class='row'>
+					<div class="col-md-4">
+						<span class="input-label" style='width:200px'>Latitude</span>
+					</div>
+					<div class="col-md-8">	
+						<label class="item item-input">
+							<input type="text" ng-model="model.latitude" required>
+							<!--<input type="text" ng-keypress='controller.disableText()' ng-model="model.latitude" required>-->
+						</label>
+					</div>	
+				</div>	
+				<div class='row'>
+					<div class="col-md-4">
+						<span class="input-label" style='width:200px'>Longitude</span>
+					</div>
+					<div class="col-md-8">	
+						<label class="item item-input">
+							<input type="text" ng-model="model.longitude" required>
+						</label>
+					</div>	
+				</div>	
+     			<div class='row'>
+					<div class="col-md-4">
+						<span class="input-label" style='width:200px;'>Address</span>
+					</div>
+					<div class="col-md-8">	
+						<label class="item item-input">
+							<input type="text" ng-model="model.address" required>
+						</label>
+					</div>				
+				</div>			
+				<div class='row'>
+					<div class="col-md-4">
+						<span class="input-label" style='width:200px;'>Tags</span>
+					</div>
+					<div class="col-md-8">	
+						<label>
+							<tag-editor ng-model="tags" output="name" fetch='api/tag?name='></tag-editor>
+							<span class="log"></span>
+						</label>
+					</div>		
+				</div>
+		</ion-list>
+	</ion-content>
+	
+</ion-view>
