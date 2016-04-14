@@ -14,6 +14,12 @@ class HotspotCreate extends stream.Transform
 		tagsReady data.tags.split(",")
 			.then (tags) ->
 				data.tags = tags
+				data.location =
+					coordinates: [parseFloat(data.longitude), parseFloat(data.latitude)]
+					type: 'Point'
+									
+				sails.log.debug "data: #{JSON.stringify(data)}"	
+				#sails.models.geohotspot.create(data)	
 				sails.models.hotspot.create(data)
 			.catch (err) ->
 				errCount++

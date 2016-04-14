@@ -25,12 +25,12 @@ module.exports =
 			authUrl: "https://mob.myvnc.com/org/oauth2/authorize/"
 			response_type:	"token"
 			scope:			"https://mob.myvnc.com/org/users"
-			client_id:		'client_id'	
-
+			client_id:		'client_id'
 	map:
 		coords:
 			latitude:	22.36633475
 			longitude:	114.08627915
+		distance:	2
 		zoom:	11
 		labelAnchor:	"100 0"	
 

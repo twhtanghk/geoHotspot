@@ -1,5 +1,26 @@
 env = require './env.coffee'
 
+currentPosReady = ->
+	coords = env.map.coords
+	return new Promise (fulfill, reject) ->
+		options = 
+			timeout: 60000
+			enableHighAccuracy: true
+		watchID = undefined
+		
+		showLocation = (position) ->
+			fulfill
+				latitude: Number(Math.round(position.coords.latitude+'e6')+'e-6')
+				longitude: Number(Math.round(position.coords.longitude+'e6')+'e-6')
+
+		errorHandler = (err) ->
+			fulfill coords
+		
+		if navigator.geolocation
+			watchID = navigator.geolocation.getCurrentPosition(showLocation, errorHandler, options)
+		else
+			fulfill coords
+
 
 angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'ngTouch', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps', 'ngGeolocation']
 
@@ -45,10 +66,13 @@ angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
 					controller: 'geoCtrl'
 			resolve:
 				cliModel: 'model'
-				collection: (cliModel) ->
+				coords: () ->
+					currentPosReady()
+						.then (pos) ->
+							ret = pos
+				collection: (cliModel, coords) ->
 					ret = new cliModel.MapList()
-					ret.$fetch({params: {sort: 'name ASC'}})
-		   
+					ret.$fetch({params: {sort: 'name ASC', longitude: coords.longitude, latitude: coords.latitude, distance: env.map.distance, limit: 50 }})
 
 		$stateProvider.state 'app.readHotspot',
 			url: "/hotspot/read/:id"

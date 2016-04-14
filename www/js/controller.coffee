@@ -46,50 +46,18 @@ HotspotListCtrl = ($scope, collection, $location, model, uiGmapGoogleMapApi) ->
 					$scope.$broadcast('scroll.infiniteScrollComplete')
 				.catch alert
 			return @
-
-updateCoords = ($scope, coords) ->
-	$scope.map.center=coords
-	$scope.marker.coords=coords
-	$scope.marker.options.labelContent="lat: #{coords.latitude} lon: #{coords.longitude}"
-	$scope.$apply 'map'
-			
-currentPosReady = ($scope)->
-	options = 
-		timeout: 60000
-		enableHighAccuracy: true
-		maximumAge : 250
-
-	showLocation = (position) ->
-		#coords = position.coords
-		updateCoords $scope, position.coords
-
-	errorHandler = (err) ->
-		coords = env.map.coords
-		coords.latitude = coords.latitude + 1
-		updateCoords $scope, coords
-		
-	if navigator.geolocation
-		navigator.geolocation.watchPosition(showLocation, errorHandler, options)
-		#watchID = navigator.geolocation.getCurrentPosition(showLocation, errorHandler, options)
-		#watchID = navigator.geolocation.watchPosition(showLocation, errorHandler, options)
-	else
-		coords = env.map.coords
-		updateCoords $scope, coords
-
-						
-geoCtrl = ($scope, collection, model, $geolocation, uiGmapGoogleMapApi) ->
+					
+geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 	convert = (collection) ->
 		_.map collection, (item) ->
-			id:		item.id
-			latitude:	parseFloat(item.latitude)
-			longitude:	parseFloat(item.longitude)
-
-	
-	currentPosReady($scope)
+			id:		item._id
+			latitude:	parseFloat(item.location.coordinates[1])
+			longitude:	parseFloat(item.location.coordinates[0])
 
 	_.extend $scope,
 		collection: collection
 		map:
+			center:	coords
 			zoom:	env.map.zoom
 			bounds:	{}
 		options:
@@ -97,10 +65,12 @@ geoCtrl = ($scope, collection, model, $geolocation, uiGmapGoogleMapApi) ->
 			draggable:		true
 		marker:
 			id: 0
+			coords:	coords
 			options:
 				icon:			'img/hotspot/blue_marker.png'
 				labelAnchor:	"#{env.map.labelAnchor}"
 				labelClass:		"marker-labels"
+				labelContent:	"lat: #{coords.latitude} lon: #{coords.longitude}"
 		markers:	convert(collection.models)
 		loadMore: ->
 			collection.$fetch({params: {sort: 'name ASC'}})
@@ -110,7 +80,7 @@ geoCtrl = ($scope, collection, model, $geolocation, uiGmapGoogleMapApi) ->
 			return @
 
 	$scope.$watchCollection 'collection', ->
-		$scope.markers = convert($scope.collection.models)
+			$scope.markers = convert($scope.collection.models)
 
 HotspotFilter = ->
 	(hotspots, search) ->
@@ -129,5 +99,5 @@ angular.module('starter.controller', ['ionic', 'ngCordova', 'http-auth-intercept
 angular.module('starter.controller').controller 'MenuCtrl', ['$scope', MenuCtrl]
 angular.module('starter.controller').controller 'HotspotCtrl', ['$scope', 'model', '$location', '$stateParams', HotspotCtrl]
 angular.module('starter.controller').controller 'HotspotListCtrl', ['$scope', 'collection', '$location', 'model', HotspotListCtrl]
-angular.module('starter.controller').controller 'geoCtrl', ['$scope', 'collection', 'model', '$geolocation', geoCtrl]
+angular.module('starter.controller').controller 'geoCtrl', ['$scope', 'collection', 'coords', 'model', geoCtrl]
 angular.module('starter.controller').filter 'hotspotFilter', HotspotFilter

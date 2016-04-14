@@ -23,3 +23,6 @@ module.exports =
       collection:	'hotspot'
       via:			'tags' 
 
+    geohotspots:
+      collection:	'geohotspot'
+      via:			'tags' 
