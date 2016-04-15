@@ -33,12 +33,12 @@ angular.module 'starter.model', ['PageableAR']
 		class geoHotspot extends pageableAR.Model
 			$idAttribute: '_id'
 			
-			$urlRoot: "api/geohotspot/"	
+			$urlRoot: "api/hotspot/"	
 		
 		class MapList extends pageableAR.PageableCollection
 			model: geoHotspot
 			
-			$urlRoot: "api/geohotspot/search"
+			$urlRoot: "api/hotspot/search"
 
 		User:		User
 		Tag:	Tag

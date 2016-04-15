@@ -7,6 +7,7 @@ module.exports =
 			sails.models.tag.findOne(id:tagid)
 				.populateAll()
 				.then (tag) ->
+					#if tag.geohotspots.length==0
 					if tag.hotspots.length==0
 			      		sails.models.tag.destroy(id: tag.id)
 			      			.then Promise.resolve

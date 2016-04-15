@@ -6,11 +6,6 @@ Promise = require 'promise'
 actionUtil = require 'sails/lib/hooks/blueprints/actionUtil'
 
 module.exports =
-	findByMap: (req, res) ->
-		sails.services.crud
-			.find(req)
-			.then res.ok
-			.catch res.serverError
 	find: (req, res) ->
 		Model = actionUtil.parseModel req
 		cond = actionUtil.parseCriteria req
@@ -36,26 +31,30 @@ module.exports =
 							results:	result
 						res.ok(val)
 			.catch res.serverError
-
+	
 	create: (req, res) ->
 		Model = actionUtil.parseModel(req)
 		data = actionUtil.parseValues(req)
 		
 		sails.services.geo.geoforward data
 			.then (data) ->
+				if data.location
+					_.extend data.location,
+						type: 'Point'
 				Model.create(data)
 					.then (newInstance) ->
 						Promise.all (_.map req.body.newTag, (tag) ->
 							sails.models.tag.findOrCreate name:tag.name, {name:tag.name, createdBy:req.user.username}
 								.then (tagInstance) ->
 									tagInstance.hotspots.add newInstance
+									#tagInstance.geohotspots.add newInstance
 									tagInstance.save()
 							)
 								.then res.created(newInstance)
 					.catch (err) ->
 						sails.log.error err
-						res.serverError
-		
+						res.serverError	
+	
 	findone: (req, res) ->
 		Model = actionUtil.parseModel(req)
 		pk = actionUtil.requirePk(req)
@@ -71,7 +70,7 @@ module.exports =
 				.catch (err) ->
 					sails.log.error err
 					res.serverError
-					
+	
 	update: (req, res) ->
 		Model = actionUtil.parseModel(req)
 		pk = actionUtil.requirePk(req)
@@ -86,8 +85,40 @@ module.exports =
 						Promise.all (_.map req.body.newTag, (tag) ->
 							sails.models.tag.findOrCreate name:tag.name, {name:tag.name, createdBy:req.user.username}
 									.then (tagInstance) ->
+										#tagInstance.geohotspots.add updatedRecord
 										tagInstance.hotspots.add updatedRecord
 										tagInstance.save()
 									)
 								.then res.ok(updatedRecord)
 			.catch res.serverError
+	
+	search: (req, res) ->
+		Model = actionUtil.parseModel req
+		cond = actionUtil.parseCriteria req
+		limit = actionUtil.parseLimit(req)
+		skip = actionUtil.parseSkip(req)
+		sort = actionUtil.parseSort(req)
+
+		#sails.models.geohotspot.native (err, collection) ->
+		sails.models.hotspot.native (err, collection) ->
+  			if err or _.isUndefined(cond.longitude) or _.isUndefined(cond.latitude)
+  				res.serverError err
+  			
+  			condition =
+  				location:
+  					$geoWithin:
+  						$centerSphere:	[ [ parseFloat(cond.longitude),parseFloat(cond.latitude) ], cond.distance / 3963.2 ]
+			
+  			collection.find(condition)
+  				.limit( actionUtil.parseLimit(req) )
+  				.toArray (err, results) ->
+	  				if err
+	  					res.serverError err
+	  				
+	  				val =
+	  					count:		results.length
+	  					results:	results
+	  				res.ok val
+				
+	  				
+	  				

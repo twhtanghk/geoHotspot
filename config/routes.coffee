@@ -1,11 +1,6 @@
 module.exports = 
-	routes:	
-		# list hotspot by google map
-		'GET /api/hotspot/map':
-			controller:		'HotspotController'
-			action:			'findByMap'
-			
+	routes:				
 		# search hotspot by geospatial query
-		'GET /api/geohotspot/search':
-			controller:		'GeoHotspotController'
+		'GET /api/hotspot/search':
+			controller:		'HotspotController'
 			action:			'search'

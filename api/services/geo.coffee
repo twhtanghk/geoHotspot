@@ -6,21 +6,22 @@ querystring = require 'querystring'
 module.exports =
 
 	geoforward: (data) ->
-		if _.isUndefined data.latitude
+		if _.isEmpty(data.location.coordinates) or _.isNull data.location.coordinates[1]
 			@forward data.address
 				.then (geo) ->
-					data.latitude = geo.lat
-					data.longitude = geo.lon
+					data.location.coordinates[1] = parseFloat(geo.lat)
+					data.location.coordinates[0] = parseFloat(geo.lon)
 					return data
 		else
+			data.location.coordinates = [parseFloat(data.location.coordinates[0]), parseFloat(data.location.coordinates[1])]
 			return Promise.resolve data
 	
 	reverse: (data) ->
 		url = sails.config.geo.url
 		param =
 			format:		'json'
-			lat:		data.latitude
-			lon:		data.longitude
+			lat:		data.location.coordinates[1]
+			lon:		data.location.coordinates[0]
 			#email:		'openstreetmap@gmail.com'
 		new Promise (resolve, reject) ->
 				sails.services.rest().get "", "#{url}?#{querystring.stringify(param)}"

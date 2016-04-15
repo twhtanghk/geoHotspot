@@ -22,7 +22,3 @@ module.exports =
     hotspots:
       collection:	'hotspot'
       via:			'tags' 
-
-    geohotspots:
-      collection:	'geohotspot'
-      via:			'tags' 

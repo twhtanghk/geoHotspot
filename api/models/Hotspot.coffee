@@ -4,30 +4,33 @@
  # @docs        :: http://sailsjs.org/#!documentation/models
 
 module.exports =
+	
+	tablename: 'hotspot'
+	
+	schema: true
+	
+	attributes:
+	
+		name:
+			type: 'string'
+			required: true
+			unique: true
+			
+		location:
+			type: 'json'
+		
+		createdBy:
+			type: 'string'
+		
+		tags:
+			collection: 'tag'
+			via: 'hotspots'
+	
+	indexes:[
+		
+		attributes:
+			location: '2dsphere'
 
-  tableName: 'hs'
-  
-  schema: true
-  
-  attributes:
-  
-    name:
-      type: 'string'
-      required:	true
-      unique:	true  
-
-    longitude:
-      type: 'string'
- 
-    latitude:
-      type: 'string'   
-      
-    createdBy:
-      type: 'string'
-      #required: true
-
-   	tags:
-      collection: 'tag'
-      via:		  'hotspots'	
+	]		
     
   

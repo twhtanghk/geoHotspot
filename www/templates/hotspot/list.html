@@ -33,10 +33,10 @@
 						<span>{{model.name}}</span>
 					</div>
 					<div class="col-md-2 nowrap">
-						<span>{{model.latitude}}</span>
+						<span>{{model.location.coordinates[1]}}</span>
 					</div>
 					<div class="col-md-2 nowrap">
-						<span>{{model.longitude}}</span> 
+						<span>{{model.location.coordinates[0]}}</span> 
 					</div>
 					<div class="col-md-4 nowrap">
 						<span>{{model.address}}</span> 
@@ -48,12 +48,6 @@
 			      
 		</ion-list>
 		<ion-infinite-scroll ng-if="collection.state.skip < collection.state.count" on-infinite="loadMore()">	
-		</ion-infinite-scroll>
-		<!--<ui-gmap-google-map center='map.center' zoom='map.zoom' options="options">
-			<ui-gmap-marker coords="marker.coords" options="marker.options" idkey="marker.id"></ui-gmap-marker>
-			<ui-gmap-markers models="markers" coords="'self'" icon="'icon'">
-        	</ui-gmap-markers>
-        </ui-gmap-marker>
-		</ui-gmap-google-map>-->		
+		</ion-infinite-scroll>	
 	</ion-content>
 </ion-view>

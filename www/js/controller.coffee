@@ -5,9 +5,14 @@ MenuCtrl = ($scope) ->
 	$scope.navigator = navigator
 
 HotspotCtrl = ($scope, model, $location) ->
+	if _.isUndefined model.location
+		_.extend model, 
+			location:
+				coordinates: []
+	
 	_.extend $scope,
 		model: model
-		tags: model.tags || []
+		tags: model.tags || []		
 		edit: (id) ->
 			$location.url "/hotspot/edit/#{id}"
 		save: ->
@@ -19,7 +24,7 @@ HotspotCtrl = ($scope, model, $location) ->
 					tag.id != 0				
 				hotspot.delTag = _.difference hotspot.origTagID, (_.map hotspot.newTag, (tag) ->	tag.id)										
 			hotspot.$save().then =>
-				$location.url "/hotspot"			
+				$location.url "/hotspot"		
 		
 
 HotspotListCtrl = ($scope, collection, $location, model, uiGmapGoogleMapApi) ->
@@ -38,6 +43,7 @@ HotspotListCtrl = ($scope, collection, $location, model, uiGmapGoogleMapApi) ->
 				tagModel = new model.Tag id: tag.id
 				tagModel.$fetch()
 					.then ->
+						#if (tagModel.geohotspots).length == 1
 						if (tagModel.hotspots).length == 1
 							tagModel.$destroy()											
 		loadMore: ->
@@ -73,7 +79,8 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 				labelContent:	"lat: #{coords.latitude} lon: #{coords.longitude}"
 		markers:	convert(collection.models)
 		loadMore: ->
-			collection.$fetch({params: {sort: 'name ASC'}})
+			collection.$fetch({params: {sort: 'name ASC', longitude: coords.longitude, latitude: coords.latitude, distance: env.map.distance, limit: 50 }})
+			#collection.$fetch({params: {sort: 'name ASC'}})
 				.then ->
 					$scope.$broadcast('scroll.infiniteScrollComplete')
 				.catch alert
