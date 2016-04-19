@@ -11,7 +11,6 @@ if env.isNative()
 	window.$.getScript 'cordova.js'
 	
 require 'ngCordova'
-require 'ngGeolocation'
 require 'angular-activerecord'
 require 'angular-http-auth'
 require 'angular-touch'

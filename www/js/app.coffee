@@ -22,7 +22,7 @@ currentPosReady = ->
 			fulfill coords
 
 
-angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'ngTouch', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps', 'ngGeolocation']
+angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'ngTouch', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps']
 
 	.run (authService) ->
 		authService.login env.oauth2.opts
