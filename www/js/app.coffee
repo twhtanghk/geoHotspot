@@ -72,7 +72,7 @@ angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
 							ret = pos
 				collection: (cliModel, coords) ->
 					ret = new cliModel.MapList()
-					ret.$fetch({params: {sort: 'name ASC', longitude: coords.longitude, latitude: coords.latitude, distance: env.map.distance, limit: 50 }})
+					ret.$fetch({params: {longitude: coords.longitude, latitude: coords.latitude, distance: env.map.distance, limit: 500 }})
 
 		$stateProvider.state 'app.readHotspot',
 			url: "/hotspot/read/:id"

@@ -47,7 +47,6 @@ module.exports =
 							sails.models.tag.findOrCreate name:tag.name, {name:tag.name, createdBy:req.user.username}
 								.then (tagInstance) ->
 									tagInstance.hotspots.add newInstance
-									#tagInstance.geohotspots.add newInstance
 									tagInstance.save()
 							)
 								.then res.created(newInstance)
@@ -85,7 +84,6 @@ module.exports =
 						Promise.all (_.map req.body.newTag, (tag) ->
 							sails.models.tag.findOrCreate name:tag.name, {name:tag.name, createdBy:req.user.username}
 									.then (tagInstance) ->
-										#tagInstance.geohotspots.add updatedRecord
 										tagInstance.hotspots.add updatedRecord
 										tagInstance.save()
 									)
@@ -99,7 +97,6 @@ module.exports =
 		skip = actionUtil.parseSkip(req)
 		sort = actionUtil.parseSort(req)
 
-		#sails.models.geohotspot.native (err, collection) ->
 		sails.models.hotspot.native (err, collection) ->
   			if err or _.isUndefined(cond.longitude) or _.isUndefined(cond.latitude)
   				res.serverError err

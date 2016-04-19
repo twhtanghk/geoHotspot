@@ -17,7 +17,6 @@ class HotspotCreate extends stream.Transform
 				data.location =
 					coordinates: [parseFloat(data.longitude), parseFloat(data.latitude)]
 					type: 'Point'
-				#sails.models.geohotspot.create(data)	
 				sails.models.hotspot.create(data)
 			.catch (err) ->
 				errCount++

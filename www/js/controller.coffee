@@ -43,7 +43,6 @@ HotspotListCtrl = ($scope, collection, $location, model, uiGmapGoogleMapApi) ->
 				tagModel = new model.Tag id: tag.id
 				tagModel.$fetch()
 					.then ->
-						#if (tagModel.geohotspots).length == 1
 						if (tagModel.hotspots).length == 1
 							tagModel.$destroy()											
 		loadMore: ->
@@ -66,28 +65,49 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 			center:	coords
 			zoom:	env.map.zoom
 			bounds:	{}
+			events:
+				center_changed: (maps) ->
+					newCenter = maps.getCenter()
 		options:
 			scrollwheel:	false
 			draggable:		true
 		marker:
 			id: 0
-			coords:	coords
+			coords:
+				latitude:	coords.latitude
+				longitude:	coords.longitude			
 			options:
 				icon:			'img/hotspot/blue_marker.png'
 				labelAnchor:	"#{env.map.labelAnchor}"
 				labelClass:		"marker-labels"
 				labelContent:	"lat: #{coords.latitude} lon: #{coords.longitude}"
+				
 		markers:	convert(collection.models)
-		loadMore: ->
-			collection.$fetch({params: {sort: 'name ASC', longitude: coords.longitude, latitude: coords.latitude, distance: env.map.distance, limit: 50 }})
-			#collection.$fetch({params: {sort: 'name ASC'}})
-				.then ->
-					$scope.$broadcast('scroll.infiniteScrollComplete')
-				.catch alert
-			return @
+		circles:	[{
+			id:	1
+			center:
+				latitude:	coords.latitude
+				longitude:	coords.longitude
+			radius:	(env.map.distance*1609.344)
+			stroke:
+				color:		'#08B21F'
+				weight:		2
+				opacity:	0.5
+			fill:
+				color:		'#08B21F'
+				opacity:	0.2
+			editable:	true
+			events:
+				center_changed: (circle) ->
+					newCenter = circle.getCenter()
+				radius_changed: (circle) ->
+					distance = circle.getRadius()/1609.344
+					$scope.collection.$fetch({params: {longitude: coords.longitude, latitude: coords.latitude, distance: distance, limit: 500 }})
+		}]
+		# radius = 2 miles (1 mile = 1 609.344 meters)
 
 	$scope.$watchCollection 'collection', ->
-			$scope.markers = convert($scope.collection.models)
+		$scope.markers = convert($scope.collection.models)
 
 HotspotFilter = ->
 	(hotspots, search) ->

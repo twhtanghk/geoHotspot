@@ -5,13 +5,12 @@
 	    <h1 class='title'>Hotspot Coverage</h1>
 	</ion-nav-buttons>
 	<ion-content>
-		<ui-gmap-google-map center='map.center' zoom='map.zoom' options="options">
-			<ui-gmap-marker coords="marker.coords" options="marker.options" idkey="marker.id"></ui-gmap-marker>
+		<ui-gmap-google-map center='map.center' zoom='map.zoom' options="options" bounds='map.bounds' events="map.events">
+			<ui-gmap-marker coords="marker.coords" options="marker.options" idkey="marker.id" events="marker.events"></ui-gmap-marker>
 			<ui-gmap-markers models="markers" coords="'self'" icon="'icon'">
-        	</ui-gmap-markers>
-        </ui-gmap-marker>
+			<ui-gmap-circle ng-repeat="c in circles track by c.id" center="c.center" stroke="c.stroke" fill="c.fill" radius="c.radius" visible="c.visible" geodesic="c.geodesic" editable="c.editable" events="c.events"></ui-gmap-circle>
 		</ui-gmap-google-map>	
-		<ion-infinite-scroll ng-if="collection.state.skip < collection.state.count" on-infinite="loadMore()">	
-		</ion-infinite-scroll>	
+		<!--<ion-infinite-scroll ng-if="collection.state.skip < collection.state.count" on-infinite="loadMore()">	
+		</ion-infinite-scroll>-->
 	</ion-content>
 </ion-view>
