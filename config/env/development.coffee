@@ -16,8 +16,8 @@ module.exports =
 		verifyURL:			'https://mob.myvnc.com/org/oauth2/verify/'
 		scope:				[ "https://mob.myvnc.com/org/users"]
 		client:
-			id:		'HotspotTestAuth'
-			secret: 'pass1234'	
+			id:		'client id'
+			secret: 'client secret'	
 	models:
 		connection: 'mongo'
 		migrate:	'alter'
@@ -27,8 +27,8 @@ module.exports =
 			driver:		'mongodb'
 			host:		'localhost'
 			port:		27017
-			user:		'georw'
-			password:	'pass1234'
-			database:	'geospatial'
+			user:		'HSsailsrw'
+			password:	'password'
+			database:	'HSsails'
 	log:
 		level:		'info'			
