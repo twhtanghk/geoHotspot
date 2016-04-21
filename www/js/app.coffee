@@ -26,14 +26,12 @@ currentPosReady = ->
 			fulfill coords
 
 getMapSize = ->
-	mapWidth = env.mapSize.width
 	mapHeight = env.mapSize.height
-	if screen.width < mapWidth
-		mapWidth = screen.width
+
 	if screen.height < mapHeight
 		mapHeight = screen.height
 	
-	return {width: mapWidth, height: mapHeight}
+	return {width: screen.width, height: mapHeight}
 
 angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'ngTouch', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps']
 

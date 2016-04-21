@@ -34,7 +34,6 @@ module.exports =
 		zoom:	13
 		labelAnchor:	"100 0"
 	mapSize:
-		width:	1000
 		height:	500	
 
 									

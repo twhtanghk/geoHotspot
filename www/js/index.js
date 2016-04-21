@@ -23,8 +23,6 @@ if (env.isNative()) {
 
 require("./../lib/ngCordova/dist/ng-cordova.js");
 
-require("./../lib/ngGeolocation/ngGeolocation.js");
-
 require("./../lib/angular-activerecord/src/angular-activerecord.js");
 
 require("./../lib/angular-http-auth/src/http-auth-interceptor.js");
@@ -50,6 +48,8 @@ require("./../lib/sails-auth/src/http-auth-interceptor.js");
 
 require("./../lib/util.auth/index.js");
 
+require('googlemaps-utils');
+
 require("./../lib/angular-google-maps/dist/angular-google-maps.js");
 
 require('./app.coffee');
@@ -62,12 +62,112 @@ require('./platform.coffee');
 
 
 
-},{"./../lib/angular-activerecord/src/angular-activerecord.js":18,"./../lib/angular-animate/angular-animate.js":19,"./../lib/angular-google-maps/dist/angular-google-maps.js":20,"./../lib/angular-http-auth/src/http-auth-interceptor.js":21,"./../lib/angular-sanitize/angular-sanitize.js":22,"./../lib/angular-touch/angular-touch.js":23,"./../lib/angular-ui-router/release/angular-ui-router.js":24,"./../lib/angular/angular.js":25,"./../lib/ionic/js/ionic-angular.js":27,"./../lib/ionic/js/ionic.js":28,"./../lib/jquery-deparam/jquery-deparam.js":29,"./../lib/jquery/dist/jquery.js":30,"./../lib/ng-file-upload/angular-file-upload.js":32,"./../lib/ngCordova/dist/ng-cordova.js":33,"./../lib/ngGeolocation/ngGeolocation.js":34,"./../lib/sails-auth/src/http-auth-interceptor.js":35,"./../lib/tagDirective/index.js":37,"./../lib/underscore/underscore.js":40,"./../lib/util.auth/index.js":41,"./app.coffee":12,"./controller.coffee":13,"./env.coffee":14,"./model.coffee":15,"./platform.coffee":16,"promise":2}],2:[function(require,module,exports){
+},{"./../lib/angular-activerecord/src/angular-activerecord.js":20,"./../lib/angular-animate/angular-animate.js":21,"./../lib/angular-google-maps/dist/angular-google-maps.js":22,"./../lib/angular-http-auth/src/http-auth-interceptor.js":23,"./../lib/angular-sanitize/angular-sanitize.js":24,"./../lib/angular-touch/angular-touch.js":25,"./../lib/angular-ui-router/release/angular-ui-router.js":26,"./../lib/angular/angular.js":27,"./../lib/ionic/js/ionic-angular.js":30,"./../lib/ionic/js/ionic.js":31,"./../lib/jquery-deparam/jquery-deparam.js":32,"./../lib/jquery/dist/jquery.js":33,"./../lib/ng-file-upload/angular-file-upload.js":35,"./../lib/ngCordova/dist/ng-cordova.js":36,"./../lib/sails-auth/src/http-auth-interceptor.js":37,"./../lib/tagDirective/index.js":39,"./../lib/underscore/underscore.js":42,"./../lib/util.auth/index.js":43,"./app.coffee":14,"./controller.coffee":15,"./env.coffee":16,"./model.coffee":17,"./platform.coffee":18,"googlemaps-utils":2,"promise":4}],2:[function(require,module,exports){
+var merc = require('mercator-projection');
+
+exports.calcBounds = calcBounds;
+exports.calcZoomForBounds = calcZoomForBounds;
+
+// return the viewport bounds for a given lonlat, zoom and map/image width & height
+function calcBounds(latitude, longitude, zoom, width, height) {
+	var scale = Math.pow(2, zoom);
+	var centerPx = merc.fromLatLngToPoint({lng: longitude, lat: latitude});
+	
+	var SWPoint = {x: (centerPx.x - (width / 2) / scale), y: (centerPx.y + (height / 2) / scale)};
+	var SWLatLon = merc.fromPointToLatLng(SWPoint);
+	
+	var NEPoint = {x: (centerPx.x + (width / 2) / scale), y: (centerPx.y - (height / 2) / scale)};
+	var NELatLon = merc.fromPointToLatLng(NEPoint);
+    
+    return {
+    	bounds: [SWLatLon.lng, SWLatLon.lat, NELatLon.lng, NELatLon.lat] // [w, s, e, n]
+    	, bbox: SWLatLon.lng + ',' + SWLatLon.lat + ',' + NELatLon.lng + ',' + NELatLon.lat
+    	, top: NELatLon.lat
+    	, right: NELatLon.lng
+    	, bottom: SWLatLon.lat
+    	, left: SWLatLon.lng
+    };
+};
+
+// return the zoom for a given bounds and map/image width height
+function calcZoomForBounds(bounds, width, height) {
+	var WORLD_DIM = {width: 256, height: 256};
+	var ZOOM_MAX = 21;
+	
+	var ne = {lon: bounds[2], lat: bounds[3]};
+	var sw = {lon: bounds[0], lat: bounds[1]};
+	
+	var latFraction = (_latRad(ne.lat) - _latRad(sw.lat)) / Math.PI;
+	var lonDiff = ne.lon - sw.lon;
+	var lonFraction = ((lonDiff < 0) ? (lonDiff + 360) : lonDiff) / 360;
+	
+	var latZoom = _zoom(height, WORLD_DIM.height, latFraction);
+	var lonZoom = _zoom(width, WORLD_DIM.width, lonFraction);
+	
+	return Math.min(latZoom, lonZoom, ZOOM_MAX);
+};
+
+// private helpers
+function _latRad(lat) {
+	var sin = Math.sin(lat * Math.PI / 180);
+	var radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
+	return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
+}
+
+function _zoom(mapPx, worldPx, fraction) {
+	return Math.round(Math.log(mapPx / worldPx / fraction) / Math.LN2);
+}
+},{"mercator-projection":3}],3:[function(require,module,exports){
+exports.fromLatLngToPoint = fromLatLngToPoint;
+exports.fromPointToLatLng = fromPointToLatLng;
+
+var TILE_SIZE = 256;
+var pixelOrigin_ = {x: TILE_SIZE / 2, y: TILE_SIZE / 2};
+var pixelsPerLonDegree_ = TILE_SIZE / 360;
+var pixelsPerLonRadian_ = TILE_SIZE / (2 * Math.PI);
+	
+function _bound(value, opt_min, opt_max) {
+	if (opt_min != null) value = Math.max(value, opt_min);
+	if (opt_max != null) value = Math.min(value, opt_max);
+	return value;
+}
+
+function _degreesToRadians(deg) {
+	return deg * (Math.PI / 180);
+}
+
+function _radiansToDegrees(rad) {
+	return rad / (Math.PI / 180);
+}
+
+function fromLatLngToPoint(latLng, opt_point) {
+	var point = {x: null, y: null};
+	var origin = pixelOrigin_;
+	
+	point.x = origin.x + latLng.lng * pixelsPerLonDegree_;
+	
+	// Truncating to 0.9999 effectively limits latitude to 89.189. This is
+	// about a third of a tile past the edge of the world tile.
+	var siny = _bound(Math.sin(_degreesToRadians(latLng.lat)), -0.9999, 0.9999);
+	point.y = origin.y + 0.5 * Math.log((1 + siny) / (1 - siny)) * -pixelsPerLonRadian_;
+	
+	return point;
+};
+
+function fromPointToLatLng(point) {
+	var origin = pixelOrigin_;
+	var lng = (point.x - origin.x) / pixelsPerLonDegree_;
+	var latRadians = (point.y - origin.y) / -pixelsPerLonRadian_;
+	var lat = _radiansToDegrees(2 * Math.atan(Math.exp(latRadians)) - Math.PI / 2);
+	
+	return {lat: lat, lng: lng};
+};
+},{}],4:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib')
 
-},{"./lib":7}],3:[function(require,module,exports){
+},{"./lib":9}],5:[function(require,module,exports){
 'use strict';
 
 var asap = require('asap/raw');
@@ -282,7 +382,7 @@ function doResolve(fn, promise) {
   }
 }
 
-},{"asap/raw":11}],4:[function(require,module,exports){
+},{"asap/raw":13}],6:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./core.js');
@@ -297,7 +397,7 @@ Promise.prototype.done = function (onFulfilled, onRejected) {
   });
 };
 
-},{"./core.js":3}],5:[function(require,module,exports){
+},{"./core.js":5}],7:[function(require,module,exports){
 'use strict';
 
 //This file contains the ES6 extensions to the core Promises/A+ API
@@ -406,7 +506,7 @@ Promise.prototype['catch'] = function (onRejected) {
   return this.then(null, onRejected);
 };
 
-},{"./core.js":3}],6:[function(require,module,exports){
+},{"./core.js":5}],8:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./core.js');
@@ -424,7 +524,7 @@ Promise.prototype['finally'] = function (f) {
   });
 };
 
-},{"./core.js":3}],7:[function(require,module,exports){
+},{"./core.js":5}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./core.js');
@@ -434,7 +534,7 @@ require('./es6-extensions.js');
 require('./node-extensions.js');
 require('./synchronous.js');
 
-},{"./core.js":3,"./done.js":4,"./es6-extensions.js":5,"./finally.js":6,"./node-extensions.js":8,"./synchronous.js":9}],8:[function(require,module,exports){
+},{"./core.js":5,"./done.js":6,"./es6-extensions.js":7,"./finally.js":8,"./node-extensions.js":10,"./synchronous.js":11}],10:[function(require,module,exports){
 'use strict';
 
 // This file contains then/promise specific extensions that are only useful
@@ -566,7 +666,7 @@ Promise.prototype.nodeify = function (callback, ctx) {
   });
 }
 
-},{"./core.js":3,"asap":10}],9:[function(require,module,exports){
+},{"./core.js":5,"asap":12}],11:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./core.js');
@@ -630,7 +730,7 @@ Promise.disableSynchronous = function() {
   Promise.prototype.getState = undefined;
 };
 
-},{"./core.js":3}],10:[function(require,module,exports){
+},{"./core.js":5}],12:[function(require,module,exports){
 "use strict";
 
 // rawAsap provides everything we need except exception management.
@@ -698,7 +798,7 @@ RawTask.prototype.call = function () {
     }
 };
 
-},{"./raw":11}],11:[function(require,module,exports){
+},{"./raw":13}],13:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -922,12 +1022,55 @@ rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
 // https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],12:[function(require,module,exports){
-var env;
+},{}],14:[function(require,module,exports){
+var currentPosReady, env, geolib, getMapSize, gmu;
 
 env = require('./env.coffee');
 
-angular.module('starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'ngTouch', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps', 'ngGeolocation']).run(function(authService) {
+gmu = require('googlemaps-utils');
+
+geolib = require("./../lib/geolib/dist/geolib.js");
+
+currentPosReady = function() {
+  var coords;
+  coords = env.map.coords;
+  return new Promise(function(fulfill, reject) {
+    var errorHandler, options, showLocation, watchID;
+    options = {
+      timeout: 60000,
+      enableHighAccuracy: true
+    };
+    watchID = void 0;
+    showLocation = function(position) {
+      return fulfill({
+        latitude: Number(Math.round(position.coords.latitude + 'e6') + 'e-6'),
+        longitude: Number(Math.round(position.coords.longitude + 'e6') + 'e-6')
+      });
+    };
+    errorHandler = function(err) {
+      return fulfill(coords);
+    };
+    if (navigator.geolocation) {
+      return watchID = navigator.geolocation.getCurrentPosition(showLocation, errorHandler, options);
+    } else {
+      return fulfill(coords);
+    }
+  });
+};
+
+getMapSize = function() {
+  var mapHeight;
+  mapHeight = env.mapSize.height;
+  if (screen.height < mapHeight) {
+    mapHeight = screen.height;
+  }
+  return {
+    width: screen.width,
+    height: mapHeight
+  };
+};
+
+angular.module('starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'ngTouch', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps']).run(function(authService) {
   return authService.login(env.oauth2.opts);
 }).run(function($rootScope, platform, $ionicPlatform, $location, $http) {
   return $ionicPlatform.ready(function() {
@@ -982,12 +1125,29 @@ angular.module('starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
     },
     resolve: {
       cliModel: 'model',
-      collection: function(cliModel) {
+      coords: function() {
+        return currentPosReady().then(function(pos) {
+          var ret;
+          return ret = pos;
+        });
+      },
+      distance: function(coords) {
+        var bounds, mapSize, ret;
+        mapSize = getMapSize();
+        bounds = gmu.calcBounds(coords.latitude, coords.longitude, env.map.zoom, mapSize.width, mapSize.height);
+        return ret = geolib.getDistance(coords, {
+          latitude: bounds.bottom,
+          longitude: bounds.left
+        });
+      },
+      collection: function(cliModel, coords, distance) {
         var ret;
         ret = new cliModel.MapList();
         return ret.$fetch({
           params: {
-            sort: 'name ASC'
+            longitude: coords.longitude,
+            latitude: coords.latitude,
+            distance: distance / 1000
           }
         });
       }
@@ -1066,10 +1226,12 @@ angular.module('starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
 
 
 
-},{"./env.coffee":14}],13:[function(require,module,exports){
-var HotspotCtrl, HotspotFilter, HotspotListCtrl, MenuCtrl, config, currentPosReady, env, geoCtrl, updateCoords;
+},{"./../lib/geolib/dist/geolib.js":29,"./env.coffee":16,"googlemaps-utils":2}],15:[function(require,module,exports){
+var HotspotCtrl, HotspotFilter, HotspotListCtrl, MenuCtrl, config, env, geoCtrl, geolib, newSearch;
 
 env = require('./env.coffee');
+
+geolib = require("./../lib/geolib/dist/geolib.js");
 
 MenuCtrl = function($scope) {
   $scope.env = env;
@@ -1077,6 +1239,13 @@ MenuCtrl = function($scope) {
 };
 
 HotspotCtrl = function($scope, model, $location) {
+  if (_.isUndefined(model.location)) {
+    _.extend(model, {
+      location: {
+        coordinates: []
+      }
+    });
+  }
   return _.extend($scope, {
     model: model,
     tags: model.tags || [],
@@ -1148,54 +1317,52 @@ HotspotListCtrl = function($scope, collection, $location, model, uiGmapGoogleMap
   });
 };
 
-updateCoords = function($scope, coords) {
-  $scope.map.center = coords;
-  $scope.marker.coords = coords;
-  $scope.marker.options.labelContent = "lat: " + coords.latitude + " lon: " + coords.longitude;
-  return $scope.$apply('map');
+newSearch = function(maps, collection) {
+  var bounds, distance, newCenter;
+  newCenter = {
+    latitude: maps.getCenter().lat(),
+    longitude: maps.getCenter().lng()
+  };
+  bounds = {
+    latitude: maps.getBounds().getNorthEast().lat(),
+    longitude: maps.getBounds().getNorthEast().lng()
+  };
+  distance = geolib.getDistance(newCenter, bounds);
+  return collection.$fetch({
+    params: {
+      longitude: newCenter.longitude,
+      latitude: newCenter.latitude,
+      distance: distance / 1000
+    }
+  });
 };
 
-currentPosReady = function($scope) {
-  var coords, errorHandler, options, showLocation;
-  options = {
-    timeout: 60000,
-    enableHighAccuracy: true,
-    maximumAge: 250
-  };
-  showLocation = function(position) {
-    return updateCoords($scope, position.coords);
-  };
-  errorHandler = function(err) {
-    var coords;
-    coords = env.map.coords;
-    coords.latitude = coords.latitude + 1;
-    return updateCoords($scope, coords);
-  };
-  if (navigator.geolocation) {
-    return navigator.geolocation.watchPosition(showLocation, errorHandler, options);
-  } else {
-    coords = env.map.coords;
-    return updateCoords($scope, coords);
-  }
-};
-
-geoCtrl = function($scope, collection, model, $geolocation, uiGmapGoogleMapApi) {
+geoCtrl = function($scope, collection, coords, model, uiGmapGoogleMapApi) {
   var convert;
   convert = function(collection) {
     return _.map(collection, function(item) {
       return {
-        id: item.id,
-        latitude: parseFloat(item.latitude),
-        longitude: parseFloat(item.longitude)
+        id: item._id,
+        latitude: parseFloat(item.location.coordinates[1]),
+        longitude: parseFloat(item.location.coordinates[0])
       };
     });
   };
-  currentPosReady($scope);
   _.extend($scope, {
     collection: collection,
     map: {
+      center: coords,
       zoom: env.map.zoom,
-      bounds: {}
+      bounds: {},
+      control: {},
+      events: {
+        zoom_changed: function(maps) {
+          return newSearch(maps, collection);
+        },
+        center_changed: function(maps) {
+          return newSearch(maps, collection);
+        }
+      }
     },
     options: {
       scrollwheel: false,
@@ -1203,23 +1370,18 @@ geoCtrl = function($scope, collection, model, $geolocation, uiGmapGoogleMapApi) 
     },
     marker: {
       id: 0,
+      coords: {
+        latitude: coords.latitude,
+        longitude: coords.longitude
+      },
       options: {
         icon: 'img/hotspot/blue_marker.png',
         labelAnchor: "" + env.map.labelAnchor,
-        labelClass: "marker-labels"
+        labelClass: "marker-labels",
+        labelContent: "lat: " + coords.latitude + " lon: " + coords.longitude
       }
     },
-    markers: convert(collection.models),
-    loadMore: function() {
-      collection.$fetch({
-        params: {
-          sort: 'name ASC'
-        }
-      }).then(function() {
-        return $scope.$broadcast('scroll.infiniteScrollComplete');
-      })["catch"](alert);
-      return this;
-    }
+    markers: convert(collection.models)
   });
   return $scope.$watchCollection('collection', function() {
     return $scope.markers = convert($scope.collection.models);
@@ -1250,13 +1412,13 @@ angular.module('starter.controller').controller('HotspotCtrl', ['$scope', 'model
 
 angular.module('starter.controller').controller('HotspotListCtrl', ['$scope', 'collection', '$location', 'model', HotspotListCtrl]);
 
-angular.module('starter.controller').controller('geoCtrl', ['$scope', 'collection', 'model', '$geolocation', geoCtrl]);
+angular.module('starter.controller').controller('geoCtrl', ['$scope', 'collection', 'coords', 'model', geoCtrl]);
 
 angular.module('starter.controller').filter('hotspotFilter', HotspotFilter);
 
 
 
-},{"./env.coffee":14}],14:[function(require,module,exports){
+},{"./../lib/geolib/dist/geolib.js":29,"./env.coffee":16}],16:[function(require,module,exports){
 io.sails.url = 'https://mob.myvnc.com';
 
 io.sails.path = "/hotspot/socket.io";
@@ -1306,14 +1468,18 @@ module.exports = {
       latitude: 22.36633475,
       longitude: 114.08627915
     },
-    zoom: 11,
+    distance: 2,
+    zoom: 13,
     labelAnchor: "100 0"
+  },
+  mapSize: {
+    height: 500
   }
 };
 
 
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var env,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
@@ -1323,7 +1489,7 @@ env = require('./env.coffee');
 require("./../lib/PageableAR/model.js");
 
 angular.module('starter.model', ['PageableAR']).factory('model', function(pageableAR, $filter) {
-  var Hotspot, HotspotList, MapList, Tag, User;
+  var Hotspot, HotspotList, MapList, Tag, User, geoHotspot;
   User = (function(superClass) {
     var _me;
 
@@ -1390,6 +1556,20 @@ angular.module('starter.model', ['PageableAR']).factory('model', function(pageab
     return HotspotList;
 
   })(pageableAR.PageableCollection);
+  geoHotspot = (function(superClass) {
+    extend(geoHotspot, superClass);
+
+    function geoHotspot() {
+      return geoHotspot.__super__.constructor.apply(this, arguments);
+    }
+
+    geoHotspot.prototype.$idAttribute = '_id';
+
+    geoHotspot.prototype.$urlRoot = "api/hotspot/";
+
+    return geoHotspot;
+
+  })(pageableAR.Model);
   MapList = (function(superClass) {
     extend(MapList, superClass);
 
@@ -1397,25 +1577,26 @@ angular.module('starter.model', ['PageableAR']).factory('model', function(pageab
       return MapList.__super__.constructor.apply(this, arguments);
     }
 
-    MapList.prototype.model = Hotspot;
+    MapList.prototype.model = geoHotspot;
 
-    MapList.prototype.$urlRoot = "api/hotspot/map";
+    MapList.prototype.$urlRoot = "api/hotspot/search";
 
     return MapList;
 
-  })(pageableAR.PageableCollection);
+  })(pageableAR.Collection);
   return {
     User: User,
     Tag: Tag,
     Hotspot: Hotspot,
     HotspotList: HotspotList,
-    MapList: MapList
+    MapList: MapList,
+    geoHotspot: geoHotspot
   };
 });
 
 
 
-},{"./../lib/PageableAR/model.js":17,"./env.coffee":14}],16:[function(require,module,exports){
+},{"./../lib/PageableAR/model.js":19,"./env.coffee":16}],18:[function(require,module,exports){
 var Promise, config, env, platform;
 
 env = require('./env.coffee');
@@ -1546,7 +1727,7 @@ angular.module('platform').factory('platform', ['$rootScope', '$cordovaInAppBrow
 
 
 
-},{"./env.coffee":14,"promise":2}],17:[function(require,module,exports){
+},{"./env.coffee":16,"promise":4}],19:[function(require,module,exports){
 var _, model,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
@@ -1854,7 +2035,7 @@ model = function(ActiveRecord, $sailsSocket, server) {
 
 angular.module('PageableAR', ['ActiveRecord', 'sails.io']).factory('pageableAR', ['ActiveRecord', '$sailsSocket', model]);
 
-},{"./../angular-activerecord/src/angular-activerecord.js":18,"./../angularSails/dist/ngsails.io.js":26,"./../underscore/underscore.js":40}],18:[function(require,module,exports){
+},{"./../angular-activerecord/src/angular-activerecord.js":20,"./../angularSails/dist/ngsails.io.js":28,"./../underscore/underscore.js":42}],20:[function(require,module,exports){
 /*!
  * @licence ActiveRecord for AngularJS
  * (c) 2013-2014 Bob Fanger, Jeremy Ashkenas, DocumentCloud
@@ -2258,7 +2439,7 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 	};
 	return ActiveRecord;
 }]);
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.6
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -4397,7 +4578,7 @@ angular.module('ngAnimate', ['ng'])
 
 })(window, window.angular);
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /*! angular-google-maps 2.3.2 2016-02-11
  *  AngularJS directives for Google Maps
  *  git: https://github.com/angular-ui/angular-google-maps.git
@@ -20084,7 +20265,7 @@ angular.module('uiGmapgoogle-maps.extensions')
   };
 }]);
 }( window,angular));
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /*global angular:true, browser:true */
 
 /**
@@ -20217,7 +20398,7 @@ angular.module('uiGmapgoogle-maps.extensions')
   }]);
 })();
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * @license AngularJS v1.4.9
  * (c) 2010-2015 Google, Inc. http://angularjs.org
@@ -20902,7 +21083,7 @@ angular.module('ngSanitize').filter('linky', ['$sanitize', function($sanitize) {
 
 })(window, window.angular);
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.20
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -21535,7 +21716,7 @@ makeSwipeDirective('ngSwipeRight', 1, 'swiperight');
 
 })(window, window.angular);
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /**
  * State-based routing for AngularJS
  * @version v0.2.18
@@ -26075,7 +26256,7 @@ angular.module('ui.router.state')
   .filter('isState', $IsStateFilter)
   .filter('includedByState', $IncludedByStateFilter);
 })(window, window.angular);
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * @license AngularJS v1.4.9
  * (c) 2010-2015 Google, Inc. http://angularjs.org
@@ -55733,7 +55914,7 @@ $provide.value("$locale", {
 })(window, document);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 (function ( window, angular ) {
 
 'use strict';
@@ -57492,7 +57673,1244 @@ function arrayRemove(array, value) {
 
 })( window, angular );
 
-},{}],27:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
+/*! geolib 2.0.18 by Manuel Bieh
+* Library to provide geo functions like distance calculation,
+* conversion of decimal coordinates to sexagesimal and vice versa, etc.
+* WGS 84 (World Geodetic System 1984)
+* 
+* @author Manuel Bieh
+* @url http://www.manuelbieh.com/
+* @version 2.0.18
+* @license MIT 
+**/;(function(global, undefined) {
+
+    "use strict";
+
+    function Geolib() {}
+
+    // Constants
+    Geolib.TO_RAD = Math.PI / 180;
+    Geolib.TO_DEG = 180 / Math.PI;
+    Geolib.PI_X2 = Math.PI * 2;
+    Geolib.PI_DIV4 = Math.PI / 4;
+
+    // Setting readonly defaults
+    var geolib = Object.create(Geolib.prototype, {
+        version: {
+            value: "2.0.18"
+        },
+        radius: {
+            value: 6378137
+        },
+        minLat: {
+            value: -90
+        },
+        maxLat: {
+            value: 90
+        },
+        minLon: {
+            value: -180
+        },
+        maxLon: {
+            value: 180
+        },
+        sexagesimalPattern: {
+            value: /^([0-9]{1,3})°\s*([0-9]{1,3}(?:\.(?:[0-9]{1,2}))?)'\s*(([0-9]{1,3}(\.([0-9]{1,2}))?)"\s*)?([NEOSW]?)$/
+        },
+        measures: {
+            value: Object.create(Object.prototype, {
+                "m" : {value: 1},
+                "km": {value: 0.001},
+                "cm": {value: 100},
+                "mm": {value: 1000},
+                "mi": {value: (1 / 1609.344)},
+                "sm": {value: (1 / 1852.216)},
+                "ft": {value: (100 / 30.48)},
+                "in": {value: (100 / 2.54)},
+                "yd": {value: (1 / 0.9144)}
+            })
+        },
+        prototype: {
+            value: Geolib.prototype
+        },
+        extend: {
+            value: function(methods, overwrite) {
+                for(var prop in methods) {
+                    if(typeof geolib.prototype[prop] === 'undefined' || overwrite === true) {
+                        if(typeof methods[prop] === 'function' && typeof methods[prop].bind === 'function') {
+                            geolib.prototype[prop] = methods[prop].bind(geolib);
+                        } else {
+                            geolib.prototype[prop] = methods[prop];
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (typeof(Number.prototype.toRad) === 'undefined') {
+        Number.prototype.toRad = function() {
+            return this * Geolib.TO_RAD;
+        };
+    }
+
+    if (typeof(Number.prototype.toDeg) === 'undefined') {
+        Number.prototype.toDeg = function() {
+            return this * Geolib.TO_DEG;
+        };
+    }
+
+    // Here comes the magic
+    geolib.extend({
+
+        decimal: {},
+
+        sexagesimal: {},
+
+        distance: null,
+
+        getKeys: function(point) {
+
+            // GeoJSON Array [longitude, latitude(, elevation)]
+            if(Object.prototype.toString.call(point) == '[object Array]') {
+
+                return {
+                    longitude: point.length >= 1 ? 0 : undefined,
+                    latitude: point.length >= 2 ? 1 : undefined,
+                    elevation: point.length >= 3 ? 2 : undefined
+                };
+
+            }
+
+            var getKey = function(possibleValues) {
+
+                var key;
+
+                possibleValues.every(function(val) {
+                    // TODO: check if point is an object
+                    if(typeof point != 'object') {
+                        return true;
+                    }
+                    return point.hasOwnProperty(val) ? (function() { key = val; return false; }()) : true;
+                });
+
+                return key;
+
+            };
+
+            var longitude = getKey(['lng', 'lon', 'longitude']);
+            var latitude = getKey(['lat', 'latitude']);
+            var elevation = getKey(['alt', 'altitude', 'elevation', 'elev']);
+
+            // return undefined if not at least one valid property was found
+            if(typeof latitude == 'undefined' &&
+                typeof longitude == 'undefined' &&
+                typeof elevation == 'undefined') {
+                return undefined;
+            }
+
+            return {
+                latitude: latitude,
+                longitude: longitude,
+                elevation: elevation
+            };
+
+        },
+
+        // returns latitude of a given point, converted to decimal
+        // set raw to true to avoid conversion
+        getLat: function(point, raw) {
+            return raw === true ? point[this.getKeys(point).latitude] : this.useDecimal(point[this.getKeys(point).latitude]);
+        },
+
+        // Alias for getLat
+        latitude: function(point) {
+            return this.getLat.call(this, point);
+        },
+
+        // returns longitude of a given point, converted to decimal
+        // set raw to true to avoid conversion
+        getLon: function(point, raw) {
+            return raw === true ? point[this.getKeys(point).longitude] : this.useDecimal(point[this.getKeys(point).longitude]);
+        },
+
+        // Alias for getLon
+        longitude: function(point) {
+            return this.getLon.call(this, point);
+        },
+
+        getElev: function(point) {
+            return point[this.getKeys(point).elevation];
+        },
+
+        // Alias for getElev
+        elevation: function(point) {
+            return this.getElev.call(this, point);
+        },
+
+        coords: function(point, raw) {
+
+            var retval = {
+                latitude: raw === true ? point[this.getKeys(point).latitude] : this.useDecimal(point[this.getKeys(point).latitude]),
+                longitude: raw === true ? point[this.getKeys(point).longitude] : this.useDecimal(point[this.getKeys(point).longitude])
+            };
+
+            var elev = point[this.getKeys(point).elevation];
+
+            if(typeof elev !== 'undefined') {
+                retval['elevation'] = elev;
+            }
+
+            return retval;
+
+        },
+
+        // Alias for coords
+        ll: function(point, raw) {
+            return this.coords.call(this, point, raw);
+        },
+
+
+        // checks if a variable contains a valid latlong object
+        validate: function(point) {
+
+            var keys = this.getKeys(point);
+
+            if(typeof keys === 'undefined' || typeof keys.latitude === 'undefined' || keys.longitude === 'undefined') {
+                return false;
+            }
+
+            var lat = point[keys.latitude];
+            var lng = point[keys.longitude];
+
+            if(typeof lat === 'undefined' || !this.isDecimal(lat) && !this.isSexagesimal(lat)) {
+                return false;
+            }
+
+            if(typeof lng === 'undefined' || !this.isDecimal(lng) && !this.isSexagesimal(lng)) {
+                return false;
+            }
+
+            lat = this.useDecimal(lat);
+            lng = this.useDecimal(lng);
+
+            if(lat < this.minLat || lat > this.maxLat || lng < this.minLon || lng > this.maxLon) {
+                return false;
+            }
+
+            return true;
+
+        },
+
+        /**
+        * Calculates geodetic distance between two points specified by latitude/longitude using
+        * Vincenty inverse formula for ellipsoids
+        * Vincenty Inverse Solution of Geodesics on the Ellipsoid (c) Chris Veness 2002-2010
+        * (Licensed under CC BY 3.0)
+        *
+        * @param    object    Start position {latitude: 123, longitude: 123}
+        * @param    object    End position {latitude: 123, longitude: 123}
+        * @param    integer   Accuracy (in meters)
+        * @return   integer   Distance (in meters)
+        */
+        getDistance: function(start, end, accuracy) {
+
+            accuracy = Math.floor(accuracy) || 1;
+
+            var s = this.coords(start);
+            var e = this.coords(end);
+
+            var a = 6378137, b = 6356752.314245,  f = 1/298.257223563;  // WGS-84 ellipsoid params
+            var L = (e['longitude']-s['longitude']).toRad();
+
+            var cosSigma, sigma, sinAlpha, cosSqAlpha, cos2SigmaM, sinSigma;
+
+            var U1 = Math.atan((1-f) * Math.tan(parseFloat(s['latitude']).toRad()));
+            var U2 = Math.atan((1-f) * Math.tan(parseFloat(e['latitude']).toRad()));
+            var sinU1 = Math.sin(U1), cosU1 = Math.cos(U1);
+            var sinU2 = Math.sin(U2), cosU2 = Math.cos(U2);
+
+            var lambda = L, lambdaP, iterLimit = 100;
+            do {
+                var sinLambda = Math.sin(lambda), cosLambda = Math.cos(lambda);
+                sinSigma = (
+                    Math.sqrt(
+                        (
+                            cosU2 * sinLambda
+                        ) * (
+                            cosU2 * sinLambda
+                        ) + (
+                            cosU1 * sinU2 - sinU1 * cosU2 * cosLambda
+                        ) * (
+                            cosU1 * sinU2 - sinU1 * cosU2 * cosLambda
+                        )
+                    )
+                );
+                if (sinSigma === 0) {
+                    return geolib.distance = 0;  // co-incident points
+                }
+
+                cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;
+                sigma = Math.atan2(sinSigma, cosSigma);
+                sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
+                cosSqAlpha = 1 - sinAlpha * sinAlpha;
+                cos2SigmaM = cosSigma - 2 * sinU1 * sinU2 / cosSqAlpha;
+
+                if (isNaN(cos2SigmaM)) {
+                    cos2SigmaM = 0;  // equatorial line: cosSqAlpha=0 (§6)
+                }
+                var C = (
+                    f / 16 * cosSqAlpha * (
+                        4 + f * (
+                            4 - 3 * cosSqAlpha
+                        )
+                    )
+                );
+                lambdaP = lambda;
+                lambda = (
+                    L + (
+                        1 - C
+                    ) * f * sinAlpha * (
+                        sigma + C * sinSigma * (
+                            cos2SigmaM + C * cosSigma * (
+                                -1 + 2 * cos2SigmaM * cos2SigmaM
+                            )
+                        )
+                    )
+                );
+
+            } while (Math.abs(lambda-lambdaP) > 1e-12 && --iterLimit>0);
+
+            if (iterLimit === 0) {
+                return NaN;  // formula failed to converge
+            }
+
+            var uSq = (
+                cosSqAlpha * (
+                    a * a - b * b
+                ) / (
+                    b*b
+                )
+            );
+
+            var A = (
+                1 + uSq / 16384 * (
+                    4096 + uSq * (
+                        -768 + uSq * (
+                            320 - 175 * uSq
+                        )
+                    )
+                )
+            );
+
+            var B = (
+                uSq / 1024 * (
+                    256 + uSq * (
+                        -128 + uSq * (
+                            74-47 * uSq
+                        )
+                    )
+                )
+            );
+
+            var deltaSigma = (
+                B * sinSigma * (
+                    cos2SigmaM + B / 4 * (
+                        cosSigma * (
+                            -1 + 2 * cos2SigmaM * cos2SigmaM
+                        ) -B / 6 * cos2SigmaM * (
+                            -3 + 4 * sinSigma * sinSigma
+                        ) * (
+                            -3 + 4 * cos2SigmaM * cos2SigmaM
+                        )
+                    )
+                )
+            );
+
+            var distance = b * A * (sigma - deltaSigma);
+
+            distance = distance.toFixed(3); // round to 1mm precision
+
+            //if (start.hasOwnProperty(elevation) && end.hasOwnProperty(elevation)) {
+            if (typeof this.elevation(start) !== 'undefined' && typeof this.elevation(end) !== 'undefined') {
+                var climb = Math.abs(this.elevation(start) - this.elevation(end));
+                distance = Math.sqrt(distance * distance + climb * climb);
+            }
+
+            return this.distance = Math.floor(
+                Math.round(distance / accuracy) * accuracy
+            );
+
+            /*
+            // note: to return initial/final bearings in addition to distance, use something like:
+            var fwdAz = Math.atan2(cosU2*sinLambda,  cosU1*sinU2-sinU1*cosU2*cosLambda);
+            var revAz = Math.atan2(cosU1*sinLambda, -sinU1*cosU2+cosU1*sinU2*cosLambda);
+
+            return { distance: s, initialBearing: fwdAz.toDeg(), finalBearing: revAz.toDeg() };
+            */
+
+        },
+
+
+        /**
+        * Calculates the distance between two spots.
+        * This method is more simple but also far more inaccurate
+        *
+        * @param    object    Start position {latitude: 123, longitude: 123}
+        * @param    object    End position {latitude: 123, longitude: 123}
+        * @param    integer   Accuracy (in meters)
+        * @return   integer   Distance (in meters)
+        */
+        getDistanceSimple: function(start, end, accuracy) {
+
+            accuracy = Math.floor(accuracy) || 1;
+
+            var distance =
+                Math.round(
+                    Math.acos(
+                        Math.sin(
+                            this.latitude(end).toRad()
+                        ) *
+                        Math.sin(
+                            this.latitude(start).toRad()
+                        ) +
+                        Math.cos(
+                            this.latitude(end).toRad()
+                        ) *
+                        Math.cos(
+                            this.latitude(start).toRad()
+                        ) *
+                        Math.cos(
+                            this.longitude(start).toRad() - this.longitude(end).toRad()
+                        )
+                    ) * this.radius
+                );
+
+            return geolib.distance = Math.floor(Math.round(distance/accuracy)*accuracy);
+
+        },
+
+
+    /**
+        * Calculates the center of a collection of geo coordinates
+        *
+        * @param        array       Collection of coords [{latitude: 51.510, longitude: 7.1321}, {latitude: 49.1238, longitude: "8° 30' W"}, ...]
+        * @return       object      {latitude: centerLat, longitude: centerLng}
+        */
+        getCenter: function(coords) {
+
+            if (!coords.length) {
+                return false;
+            }
+
+            var X = 0.0;
+            var Y = 0.0;
+            var Z = 0.0;
+            var lat, lon, hyp;
+
+            coords.forEach(function(coord) {
+
+                lat = coord.latitude * Geolib.TO_RAD;
+                lon = coord.longitude * Geolib.TO_RAD;
+
+                X += Math.cos(lat) * Math.cos(lon);
+                Y += Math.cos(lat) * Math.sin(lon);
+                Z += Math.sin(lat);
+
+            });
+
+            var nb_coords = coords.length;
+            X = X / nb_coords;
+            Y = Y / nb_coords;
+            Z = Z / nb_coords;
+
+            lon = Math.atan2(Y, X);
+            hyp = Math.sqrt(X * X + Y * Y);
+            lat = Math.atan2(Z, hyp);
+
+            return {
+                latitude: (lat * Geolib.TO_DEG).toFixed(6),
+                longitude: (lon * Geolib.TO_DEG).toFixed(6)
+            };
+
+        },
+
+
+        /**
+        * Gets the max and min, latitude, longitude, and elevation (if provided).
+        * @param        array       array with coords e.g. [{latitude: 51.5143, longitude: 7.4138}, {latitude: 123, longitude: 123}, ...]
+        * @return   object      {maxLat: maxLat,
+        *                     minLat: minLat
+        *                     maxLng: maxLng,
+        *                     minLng: minLng,
+        *                     maxElev: maxElev,
+        *                     minElev: minElev}
+        */
+        getBounds: function(coords) {
+
+            if (!coords.length) {
+                return false;
+            }
+
+            var useElevation = this.elevation(coords[0]);
+
+            var stats = {
+                maxLat: -Infinity,
+                minLat: Infinity,
+                maxLng: -Infinity,
+                minLng: Infinity
+            };
+
+            if (typeof useElevation != 'undefined') {
+                stats.maxElev = 0;
+                stats.minElev = Infinity;
+            }
+
+            for (var i = 0, l = coords.length; i < l; ++i) {
+
+                stats.maxLat = Math.max(this.latitude(coords[i]), stats.maxLat);
+                stats.minLat = Math.min(this.latitude(coords[i]), stats.minLat);
+                stats.maxLng = Math.max(this.longitude(coords[i]), stats.maxLng);
+                stats.minLng = Math.min(this.longitude(coords[i]), stats.minLng);
+
+                if (useElevation) {
+                    stats.maxElev = Math.max(this.elevation(coords[i]), stats.maxElev);
+                    stats.minElev = Math.min(this.elevation(coords[i]), stats.minElev);
+                }
+
+            }
+
+            return stats;
+
+        },
+
+
+        /**
+        * Computes the bounding coordinates of all points on the surface
+        * of the earth less than or equal to the specified great circle
+        * distance.
+        *
+        * @param object Point position {latitude: 123, longitude: 123}
+        * @param number Distance (in meters).
+        * @return array Collection of two points defining the SW and NE corners.
+        */
+        getBoundsOfDistance: function(point, distance) {
+
+            var latitude = this.latitude(point);
+            var longitude = this.longitude(point);
+
+            var radLat = latitude.toRad();
+            var radLon = longitude.toRad();
+
+            var radDist = distance / this.radius;
+            var minLat = radLat - radDist;
+            var maxLat = radLat + radDist;
+
+            var MAX_LAT_RAD = this.maxLat.toRad();
+            var MIN_LAT_RAD = this.minLat.toRad();
+            var MAX_LON_RAD = this.maxLon.toRad();
+            var MIN_LON_RAD = this.minLon.toRad();
+
+            var minLon;
+            var maxLon;
+
+            if (minLat > MIN_LAT_RAD && maxLat < MAX_LAT_RAD) {
+
+                var deltaLon = Math.asin(Math.sin(radDist) / Math.cos(radLat));
+                minLon = radLon - deltaLon;
+
+                if (minLon < MIN_LON_RAD) {
+                    minLon += Geolib.PI_X2;
+                }
+
+                maxLon = radLon + deltaLon;
+
+                if (maxLon > MAX_LON_RAD) {
+                    maxLon -= Geolib.PI_X2;
+                }
+
+            } else {
+                // A pole is within the distance.
+                minLat = Math.max(minLat, MIN_LAT_RAD);
+                maxLat = Math.min(maxLat, MAX_LAT_RAD);
+                minLon = MIN_LON_RAD;
+                maxLon = MAX_LON_RAD;
+            }
+
+            return [
+                // Southwest
+                {
+                    latitude: minLat.toDeg(),
+                    longitude: minLon.toDeg()
+                },
+                // Northeast
+                {
+                    latitude: maxLat.toDeg(),
+                    longitude: maxLon.toDeg()
+                }
+            ];
+
+        },
+
+
+        /**
+        * Checks whether a point is inside of a polygon or not.
+        * Note that the polygon coords must be in correct order!
+        *
+        * @param        object      coordinate to check e.g. {latitude: 51.5023, longitude: 7.3815}
+        * @param        array       array with coords e.g. [{latitude: 51.5143, longitude: 7.4138}, {latitude: 123, longitude: 123}, ...]
+        * @return       bool        true if the coordinate is inside the given polygon
+        */
+        isPointInside: function(latlng, coords) {
+
+            for(var c = false, i = -1, l = coords.length, j = l - 1; ++i < l; j = i) {
+
+                if(
+                    (
+                        (this.longitude(coords[i]) <= this.longitude(latlng) && this.longitude(latlng) < this.longitude(coords[j])) ||
+                        (this.longitude(coords[j]) <= this.longitude(latlng) && this.longitude(latlng) < this.longitude(coords[i]))
+                    ) &&
+                    (
+                        this.latitude(latlng) < (this.latitude(coords[j]) - this.latitude(coords[i])) *
+                        (this.longitude(latlng) - this.longitude(coords[i])) /
+                        (this.longitude(coords[j]) - this.longitude(coords[i])) +
+                        this.latitude(coords[i])
+                    )
+                ) {
+                    c = !c;
+                }
+
+            }
+
+            return c;
+
+        },
+
+       /**
+        * Pre calculate the polygon coords, to speed up the point inside check.
+        * Use this function before calling isPointInsideWithPreparedPolygon()
+        * @see          Algorythm from http://alienryderflex.com/polygon/
+        * @param        array       array with coords e.g. [{latitude: 51.5143, longitude: 7.4138}, {latitude: 123, longitude: 123}, ...]
+        */
+        preparePolygonForIsPointInsideOptimized: function(coords) {
+
+            for(var i = 0, j = coords.length-1; i < coords.length; i++) {
+
+            if(this.longitude(coords[j]) === this.longitude(coords[i])) {
+
+                    coords[i].constant = this.latitude(coords[i]);
+                    coords[i].multiple = 0;
+
+                } else {
+
+                    coords[i].constant = this.latitude(coords[i]) - (
+                        this.longitude(coords[i]) * this.latitude(coords[j])
+                    ) / (
+                        this.longitude(coords[j]) - this.longitude(coords[i])
+                    ) + (
+                        this.longitude(coords[i])*this.latitude(coords[i])
+                    ) / (
+                        this.longitude(coords[j])-this.longitude(coords[i])
+                    );
+
+                    coords[i].multiple = (
+                        this.latitude(coords[j])-this.latitude(coords[i])
+                    ) / (
+                        this.longitude(coords[j])-this.longitude(coords[i])
+                    );
+
+                }
+
+                j=i;
+
+            }
+
+        },
+
+      /**
+       * Checks whether a point is inside of a polygon or not.
+       * "This is useful if you have many points that need to be tested against the same (static) polygon."
+       * Please call the function preparePolygonForIsPointInsideOptimized() with the same coords object before using this function.
+       * Note that the polygon coords must be in correct order!
+       *
+       * @see          Algorythm from http://alienryderflex.com/polygon/
+       *
+       * @param     object      coordinate to check e.g. {latitude: 51.5023, longitude: 7.3815}
+       * @param     array       array with coords e.g. [{latitude: 51.5143, longitude: 7.4138}, {latitude: 123, longitude: 123}, ...]
+       * @return        bool        true if the coordinate is inside the given polygon
+       */
+        isPointInsideWithPreparedPolygon: function(point, coords) {
+
+            var flgPointInside = false,
+            y = this.longitude(point),
+            x = this.latitude(point);
+
+            for(var i = 0, j = coords.length-1; i < coords.length; i++) {
+
+                if ((this.longitude(coords[i]) < y && this.longitude(coords[j]) >=y ||
+                    this.longitude(coords[j]) < y && this.longitude(coords[i]) >= y)) {
+
+                    flgPointInside^=(y*coords[i].multiple+coords[i].constant < x);
+
+                }
+
+                j=i;
+
+            }
+
+            return flgPointInside;
+
+        },
+
+
+        /**
+        * Shortcut for geolib.isPointInside()
+        */
+        isInside: function() {
+            return this.isPointInside.apply(this, arguments);
+        },
+
+
+        /**
+        * Checks whether a point is inside of a circle or not.
+        *
+        * @param        object      coordinate to check (e.g. {latitude: 51.5023, longitude: 7.3815})
+        * @param        object      coordinate of the circle's center (e.g. {latitude: 51.4812, longitude: 7.4025})
+        * @param        integer     maximum radius in meters
+        * @return       bool        true if the coordinate is within the given radius
+        */
+        isPointInCircle: function(latlng, center, radius) {
+            return this.getDistance(latlng, center) < radius;
+        },
+
+
+        /**
+        * Shortcut for geolib.isPointInCircle()
+        */
+        withinRadius: function() {
+            return this.isPointInCircle.apply(this, arguments);
+        },
+
+
+        /**
+        * Gets rhumb line bearing of two points. Find out about the difference between rhumb line and
+        * great circle bearing on Wikipedia. It's quite complicated. Rhumb line should be fine in most cases:
+        *
+        * http://en.wikipedia.org/wiki/Rhumb_line#General_and_mathematical_description
+        *
+        * Function heavily based on Doug Vanderweide's great PHP version (licensed under GPL 3.0)
+        * http://www.dougv.com/2009/07/13/calculating-the-bearing-and-compass-rose-direction-between-two-latitude-longitude-coordinates-in-php/
+        *
+        * @param        object      origin coordinate (e.g. {latitude: 51.5023, longitude: 7.3815})
+        * @param        object      destination coordinate
+        * @return       integer     calculated bearing
+        */
+        getRhumbLineBearing: function(originLL, destLL) {
+
+            // difference of longitude coords
+            var diffLon = this.longitude(destLL).toRad() - this.longitude(originLL).toRad();
+
+            // difference latitude coords phi
+            var diffPhi = Math.log(
+                Math.tan(
+                    this.latitude(destLL).toRad() / 2 + Geolib.PI_DIV4
+                ) /
+                Math.tan(
+                    this.latitude(originLL).toRad() / 2 + Geolib.PI_DIV4
+                )
+            );
+
+            // recalculate diffLon if it is greater than pi
+            if(Math.abs(diffLon) > Math.PI) {
+                if(diffLon > 0) {
+                    diffLon = (Geolib.PI_X2 - diffLon) * -1;
+                }
+                else {
+                    diffLon = Geolib.PI_X2 + diffLon;
+                }
+            }
+
+            //return the angle, normalized
+            return (Math.atan2(diffLon, diffPhi).toDeg() + 360) % 360;
+
+        },
+
+
+        /**
+        * Gets great circle bearing of two points. See description of getRhumbLineBearing for more information
+        *
+        * @param        object      origin coordinate (e.g. {latitude: 51.5023, longitude: 7.3815})
+        * @param        object      destination coordinate
+        * @return       integer     calculated bearing
+        */
+        getBearing: function(originLL, destLL) {
+
+            destLL['latitude'] = this.latitude(destLL);
+            destLL['longitude'] = this.longitude(destLL);
+            originLL['latitude'] = this.latitude(originLL);
+            originLL['longitude'] = this.longitude(originLL);
+
+            var bearing = (
+                (
+                    Math.atan2(
+                        Math.sin(
+                            destLL['longitude'].toRad() -
+                            originLL['longitude'].toRad()
+                        ) *
+                        Math.cos(
+                            destLL['latitude'].toRad()
+                        ),
+                        Math.cos(
+                            originLL['latitude'].toRad()
+                        ) *
+                        Math.sin(
+                            destLL['latitude'].toRad()
+                        ) -
+                        Math.sin(
+                            originLL['latitude'].toRad()
+                        ) *
+                        Math.cos(
+                            destLL['latitude'].toRad()
+                        ) *
+                        Math.cos(
+                            destLL['longitude'].toRad() - originLL['longitude'].toRad()
+                        )
+                    )
+                ).toDeg() + 360
+            ) % 360;
+
+            return bearing;
+
+        },
+
+
+        /**
+        * Gets the compass direction from an origin coordinate to a destination coordinate.
+        *
+        * @param        object      origin coordinate (e.g. {latitude: 51.5023, longitude: 7.3815})
+        * @param        object      destination coordinate
+        * @param        string      Bearing mode. Can be either circle or rhumbline
+        * @return       object      Returns an object with a rough (NESW) and an exact direction (NNE, NE, ENE, E, ESE, etc).
+        */
+        getCompassDirection: function(originLL, destLL, bearingMode) {
+
+            var direction;
+            var bearing;
+
+            if(bearingMode == 'circle') {
+                // use great circle bearing
+                bearing = this.getBearing(originLL, destLL);
+            } else {
+                // default is rhumb line bearing
+                bearing = this.getRhumbLineBearing(originLL, destLL);
+            }
+
+            switch(Math.round(bearing/22.5)) {
+                case 1:
+                    direction = {exact: "NNE", rough: "N"};
+                    break;
+                case 2:
+                    direction = {exact: "NE", rough: "N"};
+                    break;
+                case 3:
+                    direction = {exact: "ENE", rough: "E"};
+                    break;
+                case 4:
+                    direction = {exact: "E", rough: "E"};
+                    break;
+                case 5:
+                    direction = {exact: "ESE", rough: "E"};
+                    break;
+                case 6:
+                    direction = {exact: "SE", rough: "E"};
+                    break;
+                case 7:
+                    direction = {exact: "SSE", rough: "S"};
+                    break;
+                case 8:
+                    direction = {exact: "S", rough: "S"};
+                    break;
+                case 9:
+                    direction = {exact: "SSW", rough: "S"};
+                    break;
+                case 10:
+                    direction = {exact: "SW", rough: "S"};
+                    break;
+                case 11:
+                    direction = {exact: "WSW", rough: "W"};
+                    break;
+                case 12:
+                    direction = {exact: "W", rough: "W"};
+                    break;
+                case 13:
+                    direction = {exact: "WNW", rough: "W"};
+                    break;
+                case 14:
+                    direction = {exact: "NW", rough: "W"};
+                    break;
+                case 15:
+                    direction = {exact: "NNW", rough: "N"};
+                    break;
+                default:
+                    direction = {exact: "N", rough: "N"};
+            }
+
+            direction['bearing'] = bearing;
+            return direction;
+
+        },
+
+
+        /**
+        * Shortcut for getCompassDirection
+        */
+        getDirection: function(originLL, destLL, bearingMode) {
+            return this.getCompassDirection.apply(this, arguments);
+        },
+
+
+        /**
+        * Sorts an array of coords by distance from a reference coordinate
+        *
+        * @param        object      reference coordinate e.g. {latitude: 51.5023, longitude: 7.3815}
+        * @param        mixed       array or object with coords [{latitude: 51.5143, longitude: 7.4138}, {latitude: 123, longitude: 123}, ...]
+        * @return       array       ordered array
+        */
+        orderByDistance: function(latlng, coords) {
+
+            var coordsArray = [];
+
+            for(var coord in coords) {
+
+                var d = this.getDistance(latlng, coords[coord]);
+
+                coordsArray.push({
+                    key: coord,
+                    latitude: this.latitude(coords[coord]),
+                    longitude: this.longitude(coords[coord]),
+                    distance: d
+                });
+
+            }
+
+            return coordsArray.sort(function(a, b) { return a.distance - b.distance; });
+
+        },
+
+
+        /**
+        * Finds the nearest coordinate to a reference coordinate
+        *
+        * @param        object      reference coordinate e.g. {latitude: 51.5023, longitude: 7.3815}
+        * @param        mixed       array or object with coords [{latitude: 51.5143, longitude: 7.4138}, {latitude: 123, longitude: 123}, ...]
+        * @return       array       ordered array
+        */
+        findNearest: function(latlng, coords, offset, limit) {
+
+            offset = offset || 0;
+            limit = limit || 1;
+            var ordered = this.orderByDistance(latlng, coords);
+
+            if(limit === 1) {
+                return ordered[offset];
+            } else {
+                return ordered.splice(offset, limit);
+            }
+
+        },
+
+
+        /**
+        * Calculates the length of a given path
+        *
+        * @param        mixed       array or object with coords [{latitude: 51.5143, longitude: 7.4138}, {latitude: 123, longitude: 123}, ...]
+        * @return       integer     length of the path (in meters)
+        */
+        getPathLength: function(coords) {
+
+            var dist = 0;
+            var last;
+
+            for (var i = 0, l = coords.length; i < l; ++i) {
+                if(last) {
+                    //console.log(coords[i], last, this.getDistance(coords[i], last));
+                    dist += this.getDistance(this.coords(coords[i]), last);
+                }
+                last = this.coords(coords[i]);
+            }
+
+            return dist;
+
+        },
+
+
+        /**
+        * Calculates the speed between to points within a given time span.
+        *
+        * @param        object      coords with javascript timestamp {latitude: 51.5143, longitude: 7.4138, time: 1360231200880}
+        * @param        object      coords with javascript timestamp {latitude: 51.5502, longitude: 7.4323, time: 1360245600460}
+        * @param        object      options (currently "unit" is the only option. Default: km(h));
+        * @return       float       speed in unit per hour
+        */
+        getSpeed: function(start, end, options) {
+
+            var unit = options && options.unit || 'km';
+
+            if(unit == 'mph') {
+                unit = 'mi';
+            } else if(unit == 'kmh') {
+                unit = 'km';
+            }
+
+            var distance = geolib.getDistance(start, end);
+            var time = ((end.time*1)/1000) - ((start.time*1)/1000);
+            var mPerHr = (distance/time)*3600;
+            var speed = Math.round(mPerHr * this.measures[unit] * 10000)/10000;
+            return speed;
+
+        },
+
+
+        /**
+        * Converts a distance from meters to km, mm, cm, mi, ft, in or yd
+        *
+        * @param        string      Format to be converted in
+        * @param        float       Distance in meters
+        * @param        float       Decimal places for rounding (default: 4)
+        * @return       float       Converted distance
+        */
+        convertUnit: function(unit, distance, round) {
+
+            if(distance === 0) {
+
+                return 0;
+
+            } else if(typeof distance === 'undefined') {
+
+                if(this.distance === null) {
+                    throw new Error('No distance was given');
+                } else if(this.distance === 0) {
+                    return 0;
+                } else {
+                    distance = this.distance;
+                }
+
+            }
+
+            unit = unit || 'm';
+            round = (null == round ? 4 : round);
+
+            if(typeof this.measures[unit] !== 'undefined') {
+                return this.round(distance * this.measures[unit], round);
+            } else {
+                throw new Error('Unknown unit for conversion.');
+            }
+
+        },
+
+
+        /**
+        * Checks if a value is in decimal format or, if neccessary, converts to decimal
+        *
+        * @param        mixed       Value(s) to be checked/converted (array of latlng objects, latlng object, sexagesimal string, float)
+        * @return       float       Input data in decimal format
+        */
+        useDecimal: function(value) {
+
+            if(Object.prototype.toString.call(value) === '[object Array]') {
+
+                var geolib = this;
+
+                value = value.map(function(val) {
+
+                    //if(!isNaN(parseFloat(val))) {
+                    if(geolib.isDecimal(val)) {
+
+                        return geolib.useDecimal(val);
+
+                    } else if(typeof val == 'object') {
+
+                        if(geolib.validate(val)) {
+
+                            return geolib.coords(val);
+
+                        } else {
+
+                            for(var prop in val) {
+                                val[prop] = geolib.useDecimal(val[prop]);
+                            }
+
+                            return val;
+
+                        }
+
+                    } else if(geolib.isSexagesimal(val)) {
+
+                        return geolib.sexagesimal2decimal(val);
+
+                    } else {
+
+                        return val;
+
+                    }
+
+                });
+
+                return value;
+
+            } else if(typeof value === 'object' && this.validate(value)) {
+
+                return this.coords(value);
+
+            } else if(typeof value === 'object') {
+
+                for(var prop in value) {
+                    value[prop] = this.useDecimal(value[prop]);
+                }
+
+                return value;
+
+            }
+
+
+            if (this.isDecimal(value)) {
+
+                return parseFloat(value);
+
+            } else if(this.isSexagesimal(value) === true) {
+
+                return parseFloat(this.sexagesimal2decimal(value));
+
+            }
+
+            throw new Error('Unknown format.');
+
+        },
+
+        /**
+        * Converts a decimal coordinate value to sexagesimal format
+        *
+        * @param        float       decimal
+        * @return       string      Sexagesimal value (XX° YY' ZZ")
+        */
+        decimal2sexagesimal: function(dec) {
+
+            if (dec in this.sexagesimal) {
+                return this.sexagesimal[dec];
+            }
+
+            var tmp = dec.toString().split('.');
+
+            var deg = Math.abs(tmp[0]);
+            var min = ('0.' + (tmp[1] || 0))*60;
+            var sec = min.toString().split('.');
+
+            min = Math.floor(min);
+            sec = (('0.' + (sec[1] || 0)) * 60).toFixed(2);
+
+            this.sexagesimal[dec] = (deg + '° ' + min + "' " + sec + '"');
+
+            return this.sexagesimal[dec];
+
+        },
+
+
+        /**
+        * Converts a sexagesimal coordinate to decimal format
+        *
+        * @param        float       Sexagesimal coordinate
+        * @return       string      Decimal value (XX.XXXXXXXX)
+        */
+        sexagesimal2decimal: function(sexagesimal) {
+
+            if (sexagesimal in this.decimal) {
+                return this.decimal[sexagesimal];
+            }
+
+            var regEx = new RegExp(this.sexagesimalPattern);
+            var data = regEx.exec(sexagesimal);
+            var min = 0, sec = 0;
+
+            if(data) {
+                min = parseFloat(data[2]/60);
+                sec = parseFloat(data[4]/3600) || 0;
+            }
+
+            var dec = ((parseFloat(data[1]) + min + sec)).toFixed(8);
+            //var   dec = ((parseFloat(data[1]) + min + sec));
+
+                // South and West are negative decimals
+                dec = (data[7] == 'S' || data[7] == 'W') ? parseFloat(-dec) : parseFloat(dec);
+                //dec = (data[7] == 'S' || data[7] == 'W') ? -dec : dec;
+
+            this.decimal[sexagesimal] = dec;
+
+            return dec;
+
+        },
+
+
+        /**
+        * Checks if a value is in decimal format
+        *
+        * @param        string      Value to be checked
+        * @return       bool        True if in sexagesimal format
+        */
+        isDecimal: function(value) {
+
+            value = value.toString().replace(/\s*/, '');
+
+            // looks silly but works as expected
+            // checks if value is in decimal format
+            return (!isNaN(parseFloat(value)) && parseFloat(value) == value);
+
+        },
+
+
+        /**
+        * Checks if a value is in sexagesimal format
+        *
+        * @param        string      Value to be checked
+        * @return       bool        True if in sexagesimal format
+        */
+        isSexagesimal: function(value) {
+
+            value = value.toString().replace(/\s*/, '');
+
+            return this.sexagesimalPattern.test(value);
+
+        },
+
+        round: function(value, n) {
+            var decPlace = Math.pow(10, n);
+            return Math.round(value * decPlace)/decPlace;
+        }
+
+    });
+
+    // Node module
+    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+
+        global.geolib = module.exports = geolib;
+
+    // AMD module
+    } else if (typeof define === "function" && define.amd) {
+
+        define("geolib", [], function () {
+            return geolib;
+        });
+
+    // we're in a browser
+    } else {
+
+        global.geolib = geolib;
+
+    }
+
+}(this));
+
+},{}],30:[function(require,module,exports){
 /*!
  * Copyright 2014 Drifty Co.
  * http://drifty.com/
@@ -68976,7 +70394,7 @@ IonicModule
 });
 
 })();
-},{}],28:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*!
  * Copyright 2014 Drifty Co.
  * http://drifty.com/
@@ -76788,7 +78206,7 @@ ionic.views.Slider = ionic.views.View.inherit({
 })(ionic);
 
 })();
-},{}],29:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function(deparam){
     if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') {
         var jquery = require("./../jquery/dist/jquery.js");
@@ -76895,7 +78313,7 @@ ionic.views.Slider = ionic.views.View.inherit({
     };
 });
 
-},{"./../jquery/dist/jquery.js":30}],30:[function(require,module,exports){
+},{"./../jquery/dist/jquery.js":33}],33:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -86107,7 +87525,7 @@ return jQuery;
 
 }));
 
-},{}],31:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -98463,7 +99881,7 @@ return jQuery;
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /**!
  * AngularJS file upload/drop directive and service with progress and abort
  * @author  Danial  <danial.farid@gmail.com>
@@ -99043,7 +100461,7 @@ for (key in angularFileUpload) {
 
 })();
 
-},{}],33:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /*!
  * ngCordova
  * v0.1.23-alpha
@@ -105987,90 +107405,7 @@ angular.module('ngCordova.plugins.zip', [])
   }]);
 
 })();
-},{}],34:[function(require,module,exports){
-(function(){
-    'use strict';
-
-    angular
-    .module('ngGeolocation', [])
-    .factory('$geolocation', ['$rootScope', '$window', '$q', function($rootScope, $window, $q) {
-
-        function supported() {
-            return 'geolocation' in $window.navigator;
-        }
-
-        var retVal = {
-            getCurrentPosition: function(options) {
-                var deferred = $q.defer();
-                if(supported()) {
-                    $window.navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            $rootScope.$apply(function() {
-                                retVal.position.coords = position.coords;
-                                retVal.position.timestamp = position.timestamp;
-                                deferred.resolve(position);
-                            });
-                        },
-                        function(error) {
-                            $rootScope.$apply(function() {
-                                deferred.reject({error: error});
-                            });
-                        }, options);
-                } else {
-                    deferred.reject({error: {
-                        code: 2,
-                        message: 'This web browser does not support HTML5 Geolocation'
-                    }});
-                }
-                return deferred.promise;
-            },
-
-            watchPosition: function(options) {
-                if(supported()) {
-                    if(!this.watchId) {
-                        this.watchId = $window.navigator.geolocation.watchPosition(
-                            function(position) {
-                                $rootScope.$apply(function() {
-                                    retVal.position.coords = position.coords;
-                                    retVal.position.timestamp = position.timestamp;
-                                    delete retVal.position.error;
-                                    $rootScope.$broadcast('$geolocation.position.changed', position);
-                                });
-                            },
-                            function(error) {
-                                $rootScope.$apply(function() {
-                                    retVal.position.error = error;
-                                    delete retVal.position.coords;
-                                    delete retVal.position.timestamp;
-                                    $rootScope.$broadcast('$geolocation.position.error', error);
-                                });
-                            }, options);
-                    }
-                } else {
-                    retVal.position = {
-                        error: {
-                            code: 2,
-                            message: 'This web browser does not support HTML5 Geolocation'
-                        }
-                    };
-                }
-            },
-
-            clearWatch: function() {
-                if(this.watchId) {
-                    $window.navigator.geolocation.clearWatch(this.watchId);
-                    delete this.watchId;
-                }
-            },
-
-            position: {}
-        };
-
-        return retVal;
-    }]);
-}());
-
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 // Generated by CoffeeScript 1.8.0
 (function() {
   var authInterceptor;
@@ -106239,7 +107574,7 @@ angular.module('ngCordova.plugins.zip', [])
 
 }).call(this);
 
-},{"./../../angularSails/dist/ngsails.io.js":26}],36:[function(require,module,exports){
+},{"./../../angularSails/dist/ngsails.io.js":28}],38:[function(require,module,exports){
 
 /*
 icon tag to show specified src file or ionic icon if src is not defined  
@@ -106295,7 +107630,7 @@ angular.module('ngIcon', ['ionic']).directive('icon', ['$compile', iconDir]);
 
 
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 require('./tag.coffee');
 
@@ -106746,7 +108081,7 @@ angular.module('ngTagEditor', []).directive('tagEditor', tagDir);
 
 },{}]},{},[1]);
 
-},{"./icon.coffee":36,"./select.coffee":38,"./tag.coffee":39}],38:[function(require,module,exports){
+},{"./icon.coffee":38,"./select.coffee":40,"./tag.coffee":41}],40:[function(require,module,exports){
 
 /*
 select from array of primitive
@@ -107052,7 +108387,7 @@ angular.module('ngFancySelect', ['ionic']).directive('fancySelect', ['$ionicPlat
 
 
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 var tagCtrl, tagDir,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -107129,7 +108464,7 @@ angular.module('ngTagEditor', []).directive('tagEditor', tagDir);
 
 
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -108679,7 +110014,7 @@ angular.module('ngTagEditor', []).directive('tagEditor', tagDir);
   }
 }.call(this));
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 var $, _;
 
 $ = require("./../jquery/dist/jquery.js");
@@ -108771,4 +110106,4 @@ angular.module('util.auth', ['ionic', 'http-auth-interceptor']).config(function(
   });
 });
 
-},{"./../angular-animate/angular-animate.js":19,"./../angular-sanitize/angular-sanitize.js":22,"./../angular-ui-router/release/angular-ui-router.js":24,"./../angular/angular.js":25,"./../ionic/js/ionic-angular.js":27,"./../ionic/js/ionic.js":28,"./../jquery-deparam/jquery-deparam.js":29,"./../jquery/dist/jquery.js":30,"./../lodash/lodash.js":31,"./../sails-auth/src/http-auth-interceptor.js":35}]},{},[1]);
+},{"./../angular-animate/angular-animate.js":21,"./../angular-sanitize/angular-sanitize.js":24,"./../angular-ui-router/release/angular-ui-router.js":26,"./../angular/angular.js":27,"./../ionic/js/ionic-angular.js":30,"./../ionic/js/ionic.js":31,"./../jquery-deparam/jquery-deparam.js":32,"./../jquery/dist/jquery.js":33,"./../lodash/lodash.js":34,"./../sails-auth/src/http-auth-interceptor.js":37}]},{},[1]);
