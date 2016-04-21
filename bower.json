@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "PageableAR": "*",
-    "angular-google-maps": "~2.3.2"
+    "angular-google-maps": "~2.3.2",
+    "geolib": "~2.0.18"
   }
 }

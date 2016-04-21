@@ -1,4 +1,7 @@
 env = require './env.coffee'
+gmu = require 'googlemaps-utils'
+geolib = require 'geolib'
+
 
 currentPosReady = ->
 	coords = env.map.coords
@@ -17,10 +20,20 @@ currentPosReady = ->
 			fulfill coords
 		
 		if navigator.geolocation
+			
 			watchID = navigator.geolocation.getCurrentPosition(showLocation, errorHandler, options)
 		else
 			fulfill coords
 
+getMapSize = ->
+	mapWidth = env.mapSize.width
+	mapHeight = env.mapSize.height
+	if screen.width < mapWidth
+		mapWidth = screen.width
+	if screen.height < mapHeight
+		mapHeight = screen.height
+	
+	return {width: mapWidth, height: mapHeight}
 
 angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'ngTouch', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps']
 
@@ -70,9 +83,14 @@ angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
 					currentPosReady()
 						.then (pos) ->
 							ret = pos
-				collection: (cliModel, coords) ->
+				distance: (coords) ->
+					mapSize = getMapSize()
+					bounds = gmu.calcBounds(coords.latitude, coords.longitude, env.map.zoom, mapSize.width, mapSize.height)
+					ret = geolib.getDistance(coords, {latitude: bounds.bottom, longitude: bounds.left})
+					
+				collection: (cliModel, coords, distance) ->
 					ret = new cliModel.MapList()
-					ret.$fetch({params: {longitude: coords.longitude, latitude: coords.latitude, distance: env.map.distance, limit: 500 }})
+					ret.$fetch({params: {longitude: coords.longitude, latitude: coords.latitude, distance: distance/1000 }})
 
 		$stateProvider.state 'app.readHotspot',
 			url: "/hotspot/read/:id"

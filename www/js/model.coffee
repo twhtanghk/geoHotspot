@@ -35,7 +35,7 @@ angular.module 'starter.model', ['PageableAR']
 			
 			$urlRoot: "api/hotspot/"	
 		
-		class MapList extends pageableAR.PageableCollection
+		class MapList extends pageableAR.Collection
 			model: geoHotspot
 			
 			$urlRoot: "api/hotspot/search"

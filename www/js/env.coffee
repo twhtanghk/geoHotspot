@@ -31,7 +31,10 @@ module.exports =
 			latitude:	22.36633475
 			longitude:	114.08627915
 		distance:	2
-		zoom:	11
-		labelAnchor:	"100 0"	
+		zoom:	13
+		labelAnchor:	"100 0"
+	mapSize:
+		width:	1000
+		height:	500	
 
 									

@@ -9,7 +9,7 @@ module.exports =
 	find: (req, res) ->
 		Model = actionUtil.parseModel req
 		cond = actionUtil.parseCriteria req
-			
+		
 		count = Model.count()
 			.where( cond )
 			.toPromise()
@@ -104,18 +104,14 @@ module.exports =
   			condition =
   				location:
   					$geoWithin:
-  						$centerSphere:	[ [ parseFloat(cond.longitude),parseFloat(cond.latitude) ], cond.distance / 3963.2 ]
+  						$centerSphere:	[ [ parseFloat(cond.longitude),parseFloat(cond.latitude) ], cond.distance / 6378.1 ]
 			
   			collection.find(condition)
-  				.limit( actionUtil.parseLimit(req) )
   				.toArray (err, results) ->
 	  				if err
 	  					res.serverError err
-	  				
-	  				val =
-	  					count:		results.length
-	  					results:	results
-	  				res.ok val
+
+	  				res.ok results
 				
 	  				
 	  				

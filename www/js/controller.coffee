@@ -1,4 +1,5 @@
 env = require './env.coffee'
+geolib = require 'geolib'
 	
 MenuCtrl = ($scope) ->
 	$scope.env = env
@@ -51,6 +52,17 @@ HotspotListCtrl = ($scope, collection, $location, model, uiGmapGoogleMapApi) ->
 					$scope.$broadcast('scroll.infiniteScrollComplete')
 				.catch alert
 			return @
+
+newSearch = (maps, collection) ->
+	newCenter = 
+		latitude:	maps.getCenter().lat()
+		longitude:	maps.getCenter().lng()
+	bounds =
+		latitude:	maps.getBounds().getNorthEast().lat()
+		longitude:	maps.getBounds().getNorthEast().lng()
+					
+	distance = geolib.getDistance(newCenter, bounds)
+	collection.$fetch({params: {longitude: newCenter.longitude, latitude: newCenter.latitude, distance: distance/1000 }})
 					
 geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 	convert = (collection) ->
@@ -65,9 +77,12 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 			center:	coords
 			zoom:	env.map.zoom
 			bounds:	{}
+			control: {}
 			events:
+				zoom_changed: (maps) ->
+					newSearch(maps, collection)
 				center_changed: (maps) ->
-					newCenter = maps.getCenter()
+					newSearch(maps, collection)
 		options:
 			scrollwheel:	false
 			draggable:		true
@@ -83,31 +98,10 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 				labelContent:	"lat: #{coords.latitude} lon: #{coords.longitude}"
 				
 		markers:	convert(collection.models)
-		circles:	[{
-			id:	1
-			center:
-				latitude:	coords.latitude
-				longitude:	coords.longitude
-			radius:	(env.map.distance*1609.344)
-			stroke:
-				color:		'#08B21F'
-				weight:		2
-				opacity:	0.5
-			fill:
-				color:		'#08B21F'
-				opacity:	0.2
-			editable:	true
-			events:
-				center_changed: (circle) ->
-					newCenter = circle.getCenter()
-				radius_changed: (circle) ->
-					distance = circle.getRadius()/1609.344
-					$scope.collection.$fetch({params: {longitude: coords.longitude, latitude: coords.latitude, distance: distance, limit: 500 }})
-		}]
-		# radius = 2 miles (1 mile = 1 609.344 meters)
 
 	$scope.$watchCollection 'collection', ->
 		$scope.markers = convert($scope.collection.models)
+
 
 HotspotFilter = ->
 	(hotspots, search) ->
