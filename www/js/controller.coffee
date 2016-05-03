@@ -79,10 +79,9 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 			bounds:	{}
 			control: {}
 			events:
-				zoom_changed: (maps) ->
-					newSearch(maps, collection)
-				center_changed: (maps) ->
-					newSearch(maps, collection)
+				idle: (maps) ->
+					if $scope.map.center.latitude != Number(Math.round(maps.getCenter().lat()+'e6')+'e-6') or $scope.map.center.longitude != Number(Math.round(maps.getCenter().lng()+'e6')+'e-6') or maps.getZoom() != env.map.zoom
+						newSearch(maps, collection)
 		options:
 			scrollwheel:	false
 			draggable:		true
@@ -97,7 +96,6 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 				labelClass:		"marker-labels"
 				labelContent:	"lat: #{coords.latitude} lon: #{coords.longitude}"
 				
-		markers:	convert(collection.models)
 
 	$scope.$watchCollection 'collection', ->
 		$scope.markers = convert($scope.collection.models)
