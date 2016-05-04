@@ -12,8 +12,7 @@ module.exports =
 	authUrl:	'https://mob.myvnc.com'
 
 	serverUrl: (path = @path) ->
-		"http://localhost:1337"
-		#"https://mob.myvnc.com/#{@path}"
+		"https://mob.myvnc.com/#{@path}"
 	path: 'hotspot'		
 	server:
 		rest:
@@ -25,7 +24,7 @@ module.exports =
 			authUrl: "https://mob.myvnc.com/org/oauth2/authorize/"
 			response_type:	"token"
 			scope:			"https://mob.myvnc.com/org/users"
-			client_id:		'client_id'
+			client_id:		'util.auth.dev'
 	map:
 		coords:
 			latitude:	22.36633475

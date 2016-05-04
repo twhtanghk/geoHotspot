@@ -20,7 +20,7 @@ HotspotCtrl = ($scope, model, $location) ->
 			hotspot = $scope.model
 			hotspot.newTag = $scope.tags
 			if hotspot.id
-				hotspot.newTag = _.where hotspot.tags, {id: 0}
+				hotspot.newTag = _.filter hotspot.tags, {id: 0}
 				hotspot.tags = _.filter hotspot.tags, (tag) ->
 					tag.id != 0				
 				hotspot.delTag = _.difference hotspot.origTagID, (_.map hotspot.newTag, (tag) ->	tag.id)										

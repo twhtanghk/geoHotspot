@@ -58,7 +58,8 @@
     "shelljs": "^0.5.3",
     "supertest": "^1.1.0",
     "vinyl-source-stream": "^1.1.0",
-    "winston": "^2.2.0"
+    "winston": "^2.2.0",
+    "yargs": "^3.30.0"
   },
   "scripts": {
     "debug": "node debug app.js",
