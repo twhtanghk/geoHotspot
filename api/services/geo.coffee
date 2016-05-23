@@ -1,6 +1,4 @@
 Promise = require 'promise'
-actionUtil = require 'sails/lib/hooks/blueprints/actionUtil'
-http = require 'needle'
 querystring = require 'querystring'
 
 module.exports =
@@ -17,6 +15,7 @@ module.exports =
 			return Promise.resolve data
 	
 	reverse: (data) ->
+		#sails.log 'reverse data='+JSON.stringify(data)
 		url = sails.config.geo.url
 		param =
 			format:		'json'

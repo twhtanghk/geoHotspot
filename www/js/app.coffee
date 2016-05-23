@@ -47,7 +47,7 @@ angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
 	.config (uiGmapGoogleMapApiProvider) ->
 		uiGmapGoogleMapApiProvider.configure
 			v:	'3.20'
-			libraries:	'weather,geometry,visualization'
+			libraries:	'places,weather,geometry,visualization'
 								
 	.config ($stateProvider, $urlRouterProvider) ->
 		$stateProvider.state 'app',
@@ -77,6 +77,8 @@ angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
 					controller: 'geoCtrl'
 			resolve:
 				cliModel: 'model'
+				model: (cliModel) ->
+					ret = new cliModel.geoHotspot()
 				coords: () ->
 					currentPosReady()
 						.then (pos) ->

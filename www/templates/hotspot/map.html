@@ -5,12 +5,17 @@
 	    <h1 class='title'>Hotspot Coverage</h1>
 	</ion-nav-buttons>
 	<ion-content>
-		<ui-gmap-google-map center='map.center' zoom='map.zoom' options="options" bounds='map.bounds' events="map.events" control="map.control">
-			<ui-gmap-marker coords="marker.coords" options="marker.options" idkey="marker.id" events="marker.events"></ui-gmap-marker>
-			<ui-gmap-markers models="markers" coords="'self'" icon="'icon'">
-			<!--<ui-gmap-circle ng-repeat="c in circles track by c.id" center="c.center" stroke="c.stroke" fill="c.fill" radius="c.radius" visible="c.visible" geodesic="c.geodesic" editable="c.editable" events="c.events"></ui-gmap-circle>-->
-		</ui-gmap-google-map>	
-		<!--<ion-infinite-scroll ng-if="collection.state.skip < collection.state.count" on-infinite="loadMore()">	
-		</ion-infinite-scroll>-->
+		<div id="map_canvas">
+			<script id="searchbox.tpl.html" type="text/ng-template">
+					<input type="text" placeholder="Search">			
+			</script>
+			<ui-gmap-google-map center='map.center' zoom='map.zoom' options="options" bounds='map.bounds' events="map.events" control="map.control">
+				<ui-gmap-marker coords="marker.coords" options="marker.options" idkey="marker.id" events="marker.events"></ui-gmap-marker>
+				<ui-gmap-markers models="markers" coords="'self'" icon="'icon'" events="markers.events"></ui-gmap-markers>
+				<ui-gmap-window show="window.show" coords="window.model" options="window.options"><div>{{window.title}}</div></ui-gmap-window>				
+				<ui-gmap-search-box template="searchbox.template" events="searchbox.events"></ui-gmap-search-box>
+			</ui-gmap-google-map>	
+
+		</div>
 	</ion-content>
 </ion-view>

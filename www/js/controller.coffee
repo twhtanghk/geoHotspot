@@ -28,7 +28,7 @@ HotspotCtrl = ($scope, model, $location) ->
 				$location.url "/hotspot"		
 		
 
-HotspotListCtrl = ($scope, collection, $location, model, uiGmapGoogleMapApi) ->
+HotspotListCtrl = ($scope, collection, $location, model) ->
 	_.extend $scope,
 		collection: collection
 		create: ->
@@ -64,12 +64,28 @@ newSearch = (maps, collection) ->
 	distance = geolib.getDistance(newCenter, bounds)
 	collection.$fetch({params: {longitude: newCenter.longitude, latitude: newCenter.latitude, distance: distance/1000 }})
 					
-geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
+geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady) ->
 	convert = (collection) ->
 		_.map collection, (item) ->
 			id:		item._id
 			latitude:	parseFloat(item.location.coordinates[1])
 			longitude:	parseFloat(item.location.coordinates[0])
+			title:		item.name
+			show:		false
+			events:
+				click: (marker, eventName, markerModel) ->
+					$scope.window.model = markerModel
+					$scope.window.title = markerModel.title
+					$scope.window.show = true
+					###
+					model.location =
+						latitude: markerModel.latitude
+						longitude: markerModel.longitude
+					model.findAddress(model.location)
+						.then (address) ->
+							$scope.window.address = address || ""  					
+							$scope.window.show = true
+					###	
 
 	_.extend $scope,
 		collection: collection
@@ -91,12 +107,33 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi) ->
 				latitude:	coords.latitude
 				longitude:	coords.longitude			
 			options:
-				icon:			'img/hotspot/blue_marker.png'
+				icon:			'img/hotspot/spotlight-waypoint-blue.png'
 				labelAnchor:	"#{env.map.labelAnchor}"
 				labelClass:		"marker-labels"
 				labelContent:	"lat: #{coords.latitude} lon: #{coords.longitude}"
+		searchbox:
+			template:	'searchbox.tpl.html'
+			events:
+				places_changed:	(searchBox) ->
+					place = searchBox.getPlaces()
+					$scope.map.center =
+						latitude: place[0].geometry.location.lat()
+						longitude: place[0].geometry.location.lng()
+					uiGmapIsReady.promise()
+						.then (maps) ->
+							newSearch(maps[0].map, collection)
+							
+					$scope.marker = 
+						id: 1
+						coords:
+							latitude:	place[0].geometry.location.lat()
+							longitude:	place[0].geometry.location.lng()
+						options:
+							icon:	'img/hotspot/spotlight-ad.png'
+		window:
+			model:	{}
+			show: false
 				
-
 	$scope.$watchCollection 'collection', ->
 		$scope.markers = convert($scope.collection.models)
 
@@ -118,5 +155,5 @@ angular.module('starter.controller', ['ionic', 'ngCordova', 'http-auth-intercept
 angular.module('starter.controller').controller 'MenuCtrl', ['$scope', MenuCtrl]
 angular.module('starter.controller').controller 'HotspotCtrl', ['$scope', 'model', '$location', '$stateParams', HotspotCtrl]
 angular.module('starter.controller').controller 'HotspotListCtrl', ['$scope', 'collection', '$location', 'model', HotspotListCtrl]
-angular.module('starter.controller').controller 'geoCtrl', ['$scope', 'collection', 'coords', 'model', geoCtrl]
+angular.module('starter.controller').controller 'geoCtrl', ['$scope', 'collection', 'coords', 'model', 'uiGmapGoogleMapApi','uiGmapIsReady',geoCtrl]
 angular.module('starter.controller').filter 'hotspotFilter', HotspotFilter
