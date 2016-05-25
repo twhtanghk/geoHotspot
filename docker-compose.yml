@@ -1,0 +1,14 @@
+  db:
+    image: mongo
+
+  hotspot:
+    image: ewnchui/geohotspot:latest
+    links:
+      - db:mongo
+    ports:
+      - "1337:1337"
+    volumes:
+      - /tmp/geohotspot/development.coffee:/usr/src/app/config/env/development.coffee
+      - /etc/ssl/certs/mobile.ogcio.hksarg.pem:/etc/ssl/certs/mobile.ogcio.hksarg.pem
+      - /usr/local/share/ca-certificates/mobile.ogcio.hksarg.crt:/usr/src/app/ca-certificates/mobile.ogcio.hksarg.crt
+      
