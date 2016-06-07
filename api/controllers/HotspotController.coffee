@@ -96,22 +96,46 @@ module.exports =
 		limit = actionUtil.parseLimit(req)
 		skip = actionUtil.parseSkip(req)
 		sort = actionUtil.parseSort(req)
-
-		sails.models.hotspot.native (err, collection) ->
-  			if err or _.isUndefined(cond.longitude) or _.isUndefined(cond.latitude)
-  				res.serverError err
-  			
-  			condition =
-  				location:
-  					$geoWithin:
-  						$centerSphere:	[ [ parseFloat(cond.longitude),parseFloat(cond.latitude) ], cond.distance / 6378.1 ]
+	
+		getRecords = () ->
+			return new Promise (fulfill, reject) ->
+				sails.models.hotspot.native (err, collection) ->
+		  			if err or _.isUndefined(cond.longitude) or _.isUndefined(cond.latitude)
+		  				reject err
+		  				
+		  			condition =
+		  				location:
+		  					$geoWithin:
+		  						$centerSphere:	[ [ parseFloat(cond.longitude),parseFloat(cond.latitude) ], cond.distance / 6378.1 ]
+					
+		  			collection.find(condition)
+		  				.toArray (err, results) ->
+		  					if err
+			  					reject err
+			  				fulfill results
+		  				
+		getRecords()
+			.then (data) ->
+				arryIds = _.map data, (item) -> item._id
+				new Promise (fulfill, reject) ->
+					Model.find()
+						.where({id: arryIds})
+						.populateAll()
+						.then (records) ->
+							#sails.log.debug "records.length: #{records.length}"
+							fulfill res.ok records
+						.catch reject
+	  	 	.catch res.serverError
+				  				
+	findAddress: (req, res) ->
+		cond = actionUtil.parseCriteria req
+		cond.location =
+				coordinates: [cond.longitude, cond.latitude]
 			
-  			collection.find(condition)
-  				.toArray (err, results) ->
-	  				if err
-	  					res.serverError err
-
-	  				res.ok results
-				
+		sails.services.geo.reverse cond
+			.then (data) ->
+				address = data.address
+				res.ok(address)
+			.catch res.serverError			
 	  				
 	  				

@@ -12,7 +12,7 @@
 			<ui-gmap-google-map center='map.center' zoom='map.zoom' options="options" bounds='map.bounds' events="map.events" control="map.control">
 				<ui-gmap-marker coords="marker.coords" options="marker.options" idkey="marker.id" events="marker.events"></ui-gmap-marker>
 				<ui-gmap-markers models="markers" coords="'self'" icon="'icon'" events="markers.events"></ui-gmap-markers>
-				<ui-gmap-window show="window.show" coords="window.model" options="window.options"><div>{{window.title}}</div></ui-gmap-window>				
+				<ui-gmap-window show="window.show" coords="window.model" options="window.options" closeClick="closeClick()"><div id='infowindow'>{{window.title}}<br>{{window.info}}<br>{{window.address}}</div></ui-gmap-window>				
 				<ui-gmap-search-box template="searchbox.template" events="searchbox.events"></ui-gmap-search-box>
 			</ui-gmap-google-map>	
 

@@ -22,7 +22,7 @@ class GeoForward extends stream.Transform
 		super opts
 		@on 'pipe', (src) =>
 			src.on 'headers', (header) =>
-				@push "#{format ["name", "address", "latitude", "longitude", "tags"]}\n"
+				@push "#{format ["name", "address", "info", "latitude", "longitude", "tags"]}\n"
 
 	_transform: (data, encoding, cb) ->
 		sails.services.geo.forward data.address
@@ -30,6 +30,7 @@ class GeoForward extends stream.Transform
 				@push format
 					name:			data.name
 					address:		data.address
+					info:			data.info
 					latitude:		pos.lat
 					longitude:		pos.lon
 					tags:			data.tags

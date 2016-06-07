@@ -1,7 +1,18 @@
+version: '2'
+services:
   db:
+    container_name: mongodb
     image: mongo
-
+    volumes:
+      - ./data/db:/data/db
+    command: --smallfiles --auth  
+    
+    
   hotspot:
+    container_name: geohotspot
+    build: .
+    depends_on:
+      - db
     image: ewnchui/geohotspot:latest
     links:
       - db:mongo
@@ -10,5 +21,4 @@
     volumes:
       - /tmp/geohotspot/development.coffee:/usr/src/app/config/env/development.coffee
       - /etc/ssl/certs/mobile.ogcio.hksarg.pem:/etc/ssl/certs/mobile.ogcio.hksarg.pem
-      - /usr/local/share/ca-certificates/mobile.ogcio.hksarg.crt:/usr/src/app/ca-certificates/mobile.ogcio.hksarg.crt
-      
+      - /usr/local/share/ca-certificates/mobile.ogcio.hksarg.crt:/usr/src/app/ca-certificates/mobile.ogcio.hksarg.crt     

@@ -1,5 +1,5 @@
 {
-  "name": "hotspotsails",
+  "name": "geoHotspot",
   "private": true,
   "version": "0.0.0",
   "description": "a Sails application",
@@ -69,7 +69,7 @@
   "main": "app.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/ewnchui/hotspotsails.git"
+    "url": "git://github.com/ewnchui/geoHotspot.git"
   },
   "author": "ewnchui",
   "license": ""

@@ -25,7 +25,10 @@ module.exports =
 		tags:
 			collection: 'tag'
 			via: 'hotspots'
-	
+		
+		info:
+			type: 'json'
+			
 	indexes:[
 		
 		attributes:

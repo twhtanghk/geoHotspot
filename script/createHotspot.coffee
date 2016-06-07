@@ -17,6 +17,16 @@ class HotspotCreate extends stream.Transform
 				data.location =
 					coordinates: [parseFloat(data.longitude), parseFloat(data.latitude)]
 					type: 'Point'
+				
+				if isNaN(parseInt data.info)
+					data.info =
+						title: 'Ministry'
+						value: data.info
+				else
+					data.info =
+						title: 'No. of Parking Space'
+						value: data.info	
+				
 				sails.models.hotspot.create(data)
 			.catch (err) ->
 				errCount++

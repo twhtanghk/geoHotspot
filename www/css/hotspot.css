@@ -29,3 +29,7 @@ span.cell-width{
 	right: 0;
 	left: 0;
 }
+
+div#infowindow{
+	width:250px;
+}

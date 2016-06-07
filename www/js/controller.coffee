@@ -65,27 +65,34 @@ newSearch = (maps, collection) ->
 	collection.$fetch({params: {longitude: newCenter.longitude, latitude: newCenter.latitude, distance: distance/1000 }})
 					
 geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady) ->
+	
+	getIcon = (tags) ->
+		parking = _.findIndex(tags, name: 'motorcycle')
+		wifi = _.findIndex(tags, name: 'wifi')
+		if parking != -1
+			return 'img/hotspot/parking_bicycle-2.png'
+		else
+			return 'img/hotspot/wifi.png'
+	
 	convert = (collection) ->
 		_.map collection, (item) ->
-			id:		item._id
+			id:		item.id
 			latitude:	parseFloat(item.location.coordinates[1])
 			longitude:	parseFloat(item.location.coordinates[0])
 			title:		item.name
 			show:		false
+			icon:		getIcon(item.tags)
+			info:		"#{item.info.title} : #{item.info.value}"
 			events:
 				click: (marker, eventName, markerModel) ->
-					$scope.window.model = markerModel
-					$scope.window.title = markerModel.title
-					$scope.window.show = true
-					###
-					model.location =
-						latitude: markerModel.latitude
-						longitude: markerModel.longitude
-					model.findAddress(model.location)
-						.then (address) ->
-							$scope.window.address = address || ""  					
-							$scope.window.show = true
-					###	
+					model.findAddress({latitude: markerModel.latitude, longitude: markerModel.longitude})
+						.then (address) ->	
+							_.extend $scope.window,
+								model: markerModel
+								title: markerModel.title
+								info: markerModel.info
+								address: address
+								show: true
 
 	_.extend $scope,
 		collection: collection
@@ -115,6 +122,7 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady)
 			template:	'searchbox.tpl.html'
 			events:
 				places_changed:	(searchBox) ->
+					$scope.window.show = false
 					place = searchBox.getPlaces()
 					$scope.map.center =
 						latitude: place[0].geometry.location.lat()
@@ -132,8 +140,18 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady)
 							icon:	'img/hotspot/spotlight-ad.png'
 		window:
 			model:	{}
-			show: false
-				
+			show: false		
+		###	
+			options:
+				pixelOffset:
+					width: -100
+					height: 0
+				maxWidth: 200
+		###		
+	
+	$scope.closeClick = ->
+		$scope.window.show = false
+	
 	$scope.$watchCollection 'collection', ->
 		$scope.markers = convert($scope.collection.models)
 

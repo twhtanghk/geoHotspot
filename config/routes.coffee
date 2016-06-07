@@ -4,3 +4,7 @@ module.exports =
 		'GET /api/hotspot/search':
 			controller:		'HotspotController'
 			action:			'search'
+					
+		'GET /api/hotspot/findAddress':
+			controller:		'HotspotController'
+			action:			'findAddress'		

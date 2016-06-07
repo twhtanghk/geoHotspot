@@ -10,7 +10,8 @@ module.exports =
 			add:		['isAuth']
 			remove:		['isAuth']
 			populate:	true
-			search:		true	
+			search:		true
+			findAddress:	true	
 		UserController:
 			'*':		false
 			find:		['isAuth']
