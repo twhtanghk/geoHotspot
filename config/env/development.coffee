@@ -2,7 +2,6 @@ agent = require 'https-proxy-agent'
 
 module.exports =
 	hookTimeout:	10000000
-	port:			1337
 	geo:
 		url: 'http://nominatim.openstreetmap.org/reverse'
 		addressUrl:	'http://nominatim.openstreetmap.org/search/'	

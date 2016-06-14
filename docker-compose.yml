@@ -1,24 +1,24 @@
 version: '2'
 services:
-  db:
-    container_name: mongodb
+  hotspot_mongo:
+    hostname: hotspot_mongo
+    container_name: hotspot_mongo
     image: mongo
+    ports:
+      - 27017
     volumes:
-      - ./data/db:/data/db
-    command: --smallfiles --auth  
+      - ./data/db:/data/db 
     
     
   hotspot:
-    container_name: geohotspot
-    build: .
+    hostname: hotspot
+    container_name: hotspot
     depends_on:
-      - db
+      - hotspot_mongo
     image: ewnchui/geohotspot:latest
-    links:
-      - db:mongo
     ports:
       - "1337:1337"
     volumes:
-      - /tmp/geohotspot/development.coffee:/usr/src/app/config/env/development.coffee
+      - ./config/docker/development.coffee:/usr/src/app/config/env/development.coffee
       - /etc/ssl/certs/mobile.ogcio.hksarg.pem:/etc/ssl/certs/mobile.ogcio.hksarg.pem
-      - /usr/local/share/ca-certificates/mobile.ogcio.hksarg.crt:/usr/src/app/ca-certificates/mobile.ogcio.hksarg.crt     
+      - /usr/local/share/ca-certificates/mobile.ogcio.hksarg.crt:/usr/src/app/ca-certificates/mobile.ogcio.hksarg.crt    
