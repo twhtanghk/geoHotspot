@@ -4,8 +4,7 @@ Promise = require 'promise'
 module.exports = 
 	sailsReady: new Promise (resolve, reject) ->
 		config =
-			environment:	'development'
-			port:	2000
+			environment:	'production'
 			hooks:
 				grunt:			false
 				views:			false
