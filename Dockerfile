@@ -7,14 +7,13 @@ ADD https://github.com/ewnchui/geoHotspot/archive/master.tar.gz /tmp
 RUN apt-get update && \  
 	apt-get -y install git && \
 	apt-get clean && \
-	tar --strip-components=1 -xzf /tmp/master.tar.gz && \
-	rm /tmp/master.tar.gz && \ 
 	cd /usr/src/app && \
-	npm install bower -g && \
-	npm install coffee-script -g && \
+	tar --strip-components=1 -xzf /tmp/master.tar.gz && \
+	rm /tmp/master.tar.gz && \
+	npm install bower coffee-script -g && \
 	npm install && \
-	bower install --allow-root && \
-	node_modules/.bin/gulp --prod=prod && \
-	ln -s /usr/local/bin/coffee /usr/bin/coffee 
+	bower install --allow-root
+	
+EXPOSE 1337
 
-ENTRYPOINT npm start --prod
+ENTRYPOINT ./entrypoint.sh
