@@ -82,13 +82,15 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady)
 			title:		item.name
 			show:		false
 			icon:		getIcon(item.tags)
-			info:		"#{item.info.title} : #{item.info.value}"
+			info:		"#{item.info?.title} : #{item.info?.value}"
+			tags:		_.map item.tags, (tag)-> tag.name
 			events:
-				click: (marker, eventName, markerModel) ->
+				click: (marker, eventName, markerModel) ->	
 					model.findAddress({latitude: markerModel.latitude, longitude: markerModel.longitude})
 						.then (address) ->	
 							_.extend $scope.window,
 								model: markerModel
+								tag: "tags: #{(markerModel.tags).join(", ")}"
 								title: markerModel.title
 								info: markerModel.info
 								address: address

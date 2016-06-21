@@ -141,4 +141,4 @@ angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
 								tag.id
 							return ret
 
-		$urlRouterProvider.otherwise('/hotspot')
+		$urlRouterProvider.otherwise('/map')

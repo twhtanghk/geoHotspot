@@ -17,8 +17,9 @@ services:
     image: ewnchui/geohotspot
     container_name: hotspot 
     hostname: hotspot
+    ports:
+      - 1337
     volumes:
-      - /home/myroot/docker.shell/hotspot/conf/server.coffee:/usr/src/app/config/env/production.coffee
-      - /home/myroot/docker.shell/hotspot/conf/client.coffee:/usr/src/app/www/js/env.coffee
+      - ${COMPOSEROOT}/hotspot/conf/server.coffee:/usr/src/app/config/env/production.coffee
       - /etc/ssl/certs:/etc/ssl/certs
       - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates
