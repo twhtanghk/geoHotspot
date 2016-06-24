@@ -6,14 +6,33 @@ MenuCtrl = ($scope) ->
 	$scope.navigator = navigator
 
 HotspotCtrl = ($scope, model, $location) ->
+	readOnly = (value) ->
+		if value
+			$scope.readonly = true
+		else
+			$scope.readonly = false
+	
+	readCoord = (value) ->
+		if value
+			$scope.readcoord = true
+		else
+			$scope.readcoord = false	
+
 	if _.isUndefined model.location
 		_.extend model, 
 			location:
 				coordinates: []
-	
+
 	_.extend $scope,
 		model: model
-		tags: model.tags || []		
+		readonly: false
+		readcoord: false
+		tags: model.tags || []
+		validate: () ->
+			if (model.name && model.location.coordinates[0] && model.location.coordinates[1]) or (model.name && model.address && _.isUndefined(model.location.coordinates[1]) && _.isUndefined(model.location.coordinates[0]))
+				return true
+			else
+				return false
 		edit: (id) ->
 			$location.url "/hotspot/edit/#{id}"
 		save: ->
@@ -26,7 +45,21 @@ HotspotCtrl = ($scope, model, $location) ->
 				hotspot.delTag = _.difference hotspot.origTagID, (_.map hotspot.newTag, (tag) ->	tag.id)										
 			hotspot.$save().then =>
 				$location.url "/hotspot"		
-		
+	
+	$scope.$watch 'model.address', (newvalue, oldvalue) ->
+		if newvalue != oldvalue
+			readCoord(newvalue)
+	$scope.$watch 'model.location.coordinates[0]', (newvalue, oldvalue) ->
+		if newvalue != oldvalue
+			readOnly(model.location.coordinates.join(""))		
+		else
+			readOnly(newvalue)
+	$scope.$watch 'model.location.coordinates[1]', (newvalue, oldvalue) ->
+		if newvalue != oldvalue
+			readOnly(model.location.coordinates.join(""))
+		else
+			readOnly(newvalue)
+
 
 HotspotListCtrl = ($scope, collection, $location, model) ->
 	_.extend $scope,
@@ -102,14 +135,10 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady)
 			center:	coords
 			zoom:	env.map.zoom
 			bounds:	{}
-			control: {}
 			events:
 				idle: (maps) ->
 					if $scope.map.center.latitude != Number(Math.round(maps.getCenter().lat()+'e6')+'e-6') or $scope.map.center.longitude != Number(Math.round(maps.getCenter().lng()+'e6')+'e-6') or maps.getZoom() != env.map.zoom
 						newSearch(maps, collection)
-		options:
-			scrollwheel:	false
-			draggable:		true
 		marker:
 			id: 0
 			coords:
@@ -142,14 +171,9 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady)
 							icon:	'img/hotspot/spotlight-ad.png'
 		window:
 			model:	{}
-			show: false		
-		###	
-			options:
-				pixelOffset:
-					width: -100
-					height: 0
-				maxWidth: 200
-		###		
+			show: false
+	
+	#$scope.markers = convert($scope.collection?.models)		
 	
 	$scope.closeClick = ->
 		$scope.window.show = false

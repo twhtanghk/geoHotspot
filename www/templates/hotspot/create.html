@@ -2,14 +2,14 @@
 
 	<ion-nav-buttons class="item-input-inset">
 	    <h1 class='title'>Wifi Hotspot</h1>
-	    <button class="button button-clear button-positive" ng-click="save()">OK</button>
+	    <button class="button button-clear button-positive" ng-if="validate()" ng-click="save()">OK</button>
 	</ion-nav-buttons>
 
 	<ion-content>
 		<ion-list>
 				<div class='row'>
 					<div class="col-md-4">
-						<span class="input-label" style='width:200px'>Name</span>
+						<span class="input-label">Name</span>
 					</div>
 					<div class="col-md-8">	
 						<label class="item item-input">
@@ -19,38 +19,37 @@
 				</div>	
 				<div class='row'>
 					<div class="col-md-4">
-						<span class="input-label" style='width:200px'>Latitude</span>
+						<span class="input-label">Latitude</span>
 					</div>
-					<div class="col-md-8">	
+					<div class="col-md-8">
 						<label class="item item-input">
-							<input type="text" ng-model="model.location.coordinates[1]" required>
-							<!--<input type="text" ng-keypress='controller.disableText()' ng-model="model.latitude" required>-->
+							<input type="number" ng-readonly="readCoord" min="-90" max="90" ng-model="model.location.coordinates[1]" required>
 						</label>
 					</div>	
 				</div>	
 				<div class='row'>
 					<div class="col-md-4">
-						<span class="input-label" style='width:200px'>Longitude</span>
+						<span class="input-label">Longitude</span>
 					</div>
-					<div class="col-md-8">	
+					<div class="col-md-8">
 						<label class="item item-input">
-							<input type="text" ng-model="model.location.coordinates[0]" required>
+							<input type="number" ng-readonly="readCoord" min="-180" max="180" ng-model="model.location.coordinates[0]" required>
 						</label>
 					</div>	
 				</div>	
      			<div class='row'>
 					<div class="col-md-4">
-						<span class="input-label" style='width:200px;'>Address</span>
+						<span class="input-label">Address</span>
 					</div>
-					<div class="col-md-8">	
+					<div class="col-md-8">
 						<label class="item item-input">
-							<input type="text" ng-model="model.address" required>
+							<input type="text" ng-readonly="readonly" ng-model="model.address" required>
 						</label>
 					</div>				
 				</div>			
 				<div class='row'>
 					<div class="col-md-4">
-						<span class="input-label" style='width:200px;'>Tags</span>
+						<span class="input-label">Tags</span>
 					</div>
 					<div class="col-md-8">	
 						<label>
