@@ -98,32 +98,21 @@ newSearch = (maps, collection) ->
 	collection.$fetch({params: {longitude: newCenter.longitude, latitude: newCenter.latitude, distance: distance/1000 }})
 					
 geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady) ->
-	
-	getIcon = (tags) ->
-		parking = _.findIndex(tags, name: 'motorcycle')
-		wifi = _.findIndex(tags, name: 'wifi')
-		if parking != -1
-			return 'img/hotspot/parking_bicycle-2.png'
-		else
-			return 'img/hotspot/wifi.png'
-	
+
 	convert = (collection) ->
 		_.map collection, (item) ->
-			id:		item.id
+			id:		item._id
 			latitude:	parseFloat(item.location.coordinates[1])
 			longitude:	parseFloat(item.location.coordinates[0])
 			title:		item.name
 			show:		false
-			icon:		getIcon(item.tags)
 			info:		"#{item.info?.title} : #{item.info?.value}"
-			tags:		_.map item.tags, (tag)-> tag.name
 			events:
 				click: (marker, eventName, markerModel) ->	
 					model.findAddress({latitude: markerModel.latitude, longitude: markerModel.longitude})
 						.then (address) ->	
 							_.extend $scope.window,
 								model: markerModel
-								tag: "tags: #{(markerModel.tags).join(", ")}"
 								title: markerModel.title
 								info: markerModel.info
 								address: address
@@ -171,9 +160,7 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady)
 							icon:	'img/hotspot/spotlight-ad.png'
 		window:
 			model:	{}
-			show: false
-	
-	#$scope.markers = convert($scope.collection?.models)		
+			show: false		
 	
 	$scope.closeClick = ->
 		$scope.window.show = false

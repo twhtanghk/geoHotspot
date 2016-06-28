@@ -32,7 +32,7 @@ angular.module 'starter.model', ['PageableAR']
 			$urlRoot: "api/hotspot/"
 			
 		class geoHotspot extends pageableAR.Model
-			$idAttribute: 'id'
+			$idAttribute: '_id'
 			
 			$urlRoot: "api/hotspot/"
 			
