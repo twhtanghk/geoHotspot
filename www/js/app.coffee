@@ -33,7 +33,7 @@ getMapSize = ->
 	
 	return {width: screen.width, height: mapHeight}
 
-angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'ngTouch', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps']
+angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTagEditor', 'ActiveRecord', 'angular.filter', 'util.auth', 'uiGmapgoogle-maps']
 
 	.run (authService) ->
 		authService.login env.oauth2.opts
