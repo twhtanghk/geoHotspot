@@ -80,7 +80,14 @@ module.exports =
 				Model.update(pk, values)
 					.then (updatedRecord) ->
 						if req.body.delTag.length !=0
-							sails.services.tag.delete(req.body.delTag)
+							#sails.services.tag.delete(req.body.delTag)
+							Promise.all (_.map req.body.delTag, (tagid) ->
+								sails.models.tag.findOne(id:tagid)
+									.populateAll()
+									.then (tag) ->
+										if tag.hotspots.length==0
+								      		sails.models.tag.destroy(id: tag.id)
+									.catch sails.log.error)						
 						Promise.all (_.map req.body.newTag, (tag) ->
 							sails.models.tag.findOrCreate name:tag.name, {name:tag.name, createdBy:req.user.username}
 									.then (tagInstance) ->
@@ -112,6 +119,38 @@ module.exports =
 			  			res.serverError
 			  		res.ok results
   				
+		###
+		getRecords = () ->
+			return new Promise (fulfill, reject) ->
+				sails.models.hotspot.native (err, collection) ->
+		  			if err or _.isUndefined(cond.longitude) or _.isUndefined(cond.latitude)
+		  				reject err
+		  				
+		  			condition =
+		  				location:
+		  					$geoWithin:
+		  						$centerSphere:	[ [ parseFloat(cond.longitude),parseFloat(cond.latitude) ], cond.distance / 6378.1 ]
+					
+		  			collection.find(condition)
+		  				.toArray (err, results) ->
+		  					if err
+			  					reject err
+			  				fulfill results
+		  				
+		getRecords()
+			.then (data) ->
+				itemIdList = _.map data, (item) -> item._id
+				new Promise (fulfill, reject) ->
+					Model.find()
+						.where({id: itemIdList})
+						.populateAll()
+						.then (records) ->
+							#sails.log.debug "records.length: #{records.length}"
+							fulfill res.ok records
+						.catch reject
+	  	 	.catch res.serverError  		
+  		###
+  		
 	findAddress: (req, res) ->
 		cond = actionUtil.parseCriteria req
 		cond.location =

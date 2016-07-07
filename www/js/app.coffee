@@ -77,7 +77,7 @@ angular.module 'starter', ['ionic', 'starter.controller', 'starter.model', 'ngTa
 					controller: 'geoCtrl'
 			resolve:
 				cliModel: 'model'
-				model: (cliModel) ->
+				geoModel: (cliModel) ->
 					ret = new cliModel.geoHotspot()
 				coords: () ->
 					currentPosReady()

@@ -97,8 +97,8 @@ newSearch = (maps, collection) ->
 	distance = geolib.getDistance(newCenter, bounds)
 	collection.$fetch({params: {longitude: newCenter.longitude, latitude: newCenter.latitude, distance: distance/1000 }})
 					
-geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady) ->
-
+geoCtrl = ($scope, collection, geoModel, coords, model, uiGmapGoogleMapApi, uiGmapIsReady) ->
+			
 	convert = (collection) ->
 		_.map collection, (item) ->
 			id:		item._id
@@ -109,14 +109,19 @@ geoCtrl = ($scope, collection, coords, model, uiGmapGoogleMapApi, uiGmapIsReady)
 			info:		"#{item.info?.title} : #{item.info?.value}"
 			events:
 				click: (marker, eventName, markerModel) ->	
-					model.findAddress({latitude: markerModel.latitude, longitude: markerModel.longitude})
-						.then (address) ->	
-							_.extend $scope.window,
-								model: markerModel
-								title: markerModel.title
-								info: markerModel.info
-								address: address
-								show: true
+					geoModel.findAddress({latitude: markerModel.latitude, longitude: markerModel.longitude})
+						.then (address) ->
+						
+							tagModel = new model.Hotspot id: item._id
+							tagModel.$fetch()
+								.then (data)->
+									_.extend $scope.window,
+										model: markerModel
+										tag: "tags: #{(_.map data.tags, (tag)-> tag.name).join(", ")}" || ""
+										title: markerModel.title
+										info: markerModel.info
+										address: address
+										show: true
 
 	_.extend $scope,
 		collection: collection
@@ -186,5 +191,5 @@ angular.module('starter.controller', ['ionic', 'ngCordova', 'http-auth-intercept
 angular.module('starter.controller').controller 'MenuCtrl', ['$scope', MenuCtrl]
 angular.module('starter.controller').controller 'HotspotCtrl', ['$scope', 'model', '$location', '$stateParams', HotspotCtrl]
 angular.module('starter.controller').controller 'HotspotListCtrl', ['$scope', 'collection', '$location', 'model', HotspotListCtrl]
-angular.module('starter.controller').controller 'geoCtrl', ['$scope', 'collection', 'coords', 'model', 'uiGmapGoogleMapApi','uiGmapIsReady',geoCtrl]
+angular.module('starter.controller').controller 'geoCtrl', ['$scope', 'collection', 'geoModel', 'coords', 'model', 'uiGmapGoogleMapApi','uiGmapIsReady',geoCtrl]
 angular.module('starter.controller').filter 'hotspotFilter', HotspotFilter
