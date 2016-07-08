@@ -109,6 +109,12 @@ geoCtrl = ($scope, collection, geoModel, coords, model, uiGmapGoogleMapApi, uiGm
 			info:		"#{item.info?.title} : #{item.info?.value}"
 			events:
 				click: (marker, eventName, markerModel) ->	
+					_.extend $scope.window,
+						model: markerModel
+						title: markerModel.title
+						info: markerModel.info
+						show: true
+					###
 					geoModel.findAddress({latitude: markerModel.latitude, longitude: markerModel.longitude})
 						.then (address) ->
 						
@@ -122,6 +128,7 @@ geoCtrl = ($scope, collection, geoModel, coords, model, uiGmapGoogleMapApi, uiGm
 										info: markerModel.info
 										address: address
 										show: true
+					###
 
 	_.extend $scope,
 		collection: collection
