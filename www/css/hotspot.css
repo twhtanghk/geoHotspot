@@ -1,4 +1,5 @@
 div.nowrap {
+	width: 100%;
 	display: inline-block;
 	white-space: nowrap;
 	overflow: hidden;
@@ -6,8 +7,7 @@ div.nowrap {
 	
 }
 div.header-padding {
-	padding-left:20px;
-	padding-right:55px;
+	padding: 0px 55px 0px 20px;
 }
 div.cell-padding {
 	font-size: 16px;
@@ -15,6 +15,12 @@ div.cell-padding {
 }
 span.cell-titleWidth{
 	width:200px;
+}
+span.input-font {
+	font-size: 14px;
+	display:block;
+    width:50px;
+    word-break:break-all;
 }
 span.cell-width{
 	width:400px;
@@ -57,4 +63,23 @@ span#title{
 	padding: 0 11px 0 13px;
 	text-overflow: ellipsis;
 	width: 400px;
+}
+
+.ion-label-size {
+	font-size:12px;
+}
+.tag-label-width {
+	width: 100%;
+}
+.ion-item-header {
+	font-size:16px;
+	color: #222;
+}
+p.wrap-label {
+	font-size: 14px;
+    word-wrap:break-word;
+}
+div.wrap-label2 {
+	font-size: 14px;
+    word-wrap:break-word;
 }
