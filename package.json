@@ -63,7 +63,7 @@
   },
   "scripts": {
     "debug": "node debug app.js",
-    "start": "node app.js",
+    "start": "node app.js --prod",
     "test": "mocha test/bootstrap.test.coffee test/unit/**/*.test.coffee"
   },
   "main": "app.js",
@@ -72,5 +72,5 @@
     "url": "git://github.com/ewnchui/geoHotspot.git"
   },
   "author": "ewnchui",
-  "license": ""
+  "license": "MIT"
 }

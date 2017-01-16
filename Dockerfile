@@ -13,6 +13,7 @@ WORKDIR $APP
 
 RUN npm install && \
     node_modules/.bin/bower install --allow-root && \
+    node_modules/.bin/gulp
 	
 EXPOSE 1337
 
