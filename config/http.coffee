@@ -10,10 +10,10 @@ module.exports =
           "http://#{host}"
           "https://#{host}"
         ]
-      ret = csp
-        directives:
-          defaultsrc: src
-      ret req, res, next
+        ret = csp
+          directives:
+            defaultsrc: src
+        ret req, res, next
       order: [
         'bodyParser'
         'compress'
