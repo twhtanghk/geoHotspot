@@ -3,16 +3,13 @@ module.exports =
   tableName: 'tag'
 
   schema: true
-  
+
   attributes:
-  
+
     name:
       type: 'string'
-      required:	true
-      
-    createdBy:
-      type: 'string'
-            
-    hotspots:
+      required: true
+
+    hotspot:
       collection: 'hotspot'
-      via: 'tags' 
+      via: 'tag'

@@ -1,11 +1,11 @@
 module.exports =
 
-  tableName:  'users'
-    
-  schema:    true
-  
+  tableName: 'user'
+
+  schema: true
+
   attributes:
 
     email:
-      type:    'string' 
-      required:  true
+      type: 'string'
+      required: true

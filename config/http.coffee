@@ -1,18 +1,18 @@
 csp = require 'helmet-csp'
-      
-module.exports = 
+
+module.exports =
   http:
     middleware:
       csp: (req, res, next) ->
         host = req.headers['x-forwarded-host'] || req.headers['host']
         src = [
-          "'self'" 
+          "'self'"
           "http://#{host}"
           "https://#{host}"
         ]
         ret = csp
           directives:
-            defaultsrc: src
+            defaultSrc: src
         ret req, res, next
       order: [
         'bodyParser'

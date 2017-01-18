@@ -7,8 +7,8 @@ gutil = require 'gulp-util'
 sass = require 'gulp-sass'
 minifyCss = require 'gulp-minify-css'
 rename = require 'gulp-rename'
-
-paths = sass: ['./scss/**/*.scss']
+del = require 'del'
+sh = require 'shelljs'
 
 gulp.task 'default', ['sass', 'coffee']
 
@@ -18,17 +18,11 @@ gulp.task 'sass', (done) ->
     .pipe(gulp.dest('./www/css/'))
     .pipe(minifyCss({
       keepSpecialComments: 0
-    }))
-    .pipe(rename({ extname: '.min.css' }))
+    } ))
+    .pipe(rename({ extname: '.min.css' } ))
     .pipe(gulp.dest('./www/css/'))
 
-gulp.task 'copy', ->
-  gulp.src(if argv.prod then './www/js/config/production.coffee' else './www/js/config/development.coffee')
-    .pipe(rename('env.coffee'))
-    .pipe(gulp.dest('./www/js/'))
-
-    
-gulp.task 'coffee', ['copy'], ->
+gulp.task 'coffee', ->
   browserify(entries: ['./www/js/index.coffee'])
     .transform('coffeeify')
     .transform('debowerify')
@@ -36,23 +30,23 @@ gulp.task 'coffee', ['copy'], ->
     .pipe(source('index.js'))
     .pipe(gulp.dest('./www/js/'))
 
-gulp.task 'watch', ->
-  gulp.watch(paths.sass, ['sass'])
+gulp.task 'clean', ->
+  del [
+    'node_modules'
+    'www/lib'
+  ]
 
-gulp.task 'install', ['git-check'], ->
-  bower.commands.install().on 'log', (data) ->
-    gutil.log('bower', gutil.colors.cyan(data.id), data.message)
-    
-gulp.task 'git-check', (done) ->
-  if (!sh.which('git'))
-    console.log(
-      '  ' + gutil.colors.red('Git is not installed.'),
-      '\n  Git, the version control system, is required to download Ionic.',
-      '\n  Download git here:', gutil.colors.cyan('http://git-scm.com/downloads') + '.',
-      '\n  Once git is installed, run \'' + gutil.colors.cyan('gulp install') + '\' again.'
-    )
-    process.exit(1)
-  done()
+stream = require 'stream'
+class Indent extends stream.Writable
+  constructor: (opts = {objectMode: true, decodeStrings: false}) ->
+    super opts
 
-    
-    
+  _write: (file, encoding, cb) ->
+    name = file.history
+    sh.exec "sed 's/\t/  /g' < #{name} > /tmp/$$ && mv /tmp/$$ #{name}"
+    cb()
+
+gulp.task 'indent', ->
+  gulp
+    .src ['**/*.coffee', '!node_modules/**', '!www/lib/**']
+    .pipe new Indent()

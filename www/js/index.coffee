@@ -2,14 +2,14 @@ env = require './env.coffee'
 
 window.oalert = window.alert
 window.alert = (err) ->
-	window.oalert err.data.error
+  window.oalert err.data.error
 window.Promise = require 'promise'
 window._ = require 'underscore'
 window.$ = require 'jquery'
 window.$.deparam = require 'jquery-deparam'
 if env.isNative()
-	window.$.getScript 'cordova.js'
-	
+  window.$.getScript 'cordova.js'
+
 require 'ngCordova'
 require 'angular-activerecord'
 require 'angular-http-auth'

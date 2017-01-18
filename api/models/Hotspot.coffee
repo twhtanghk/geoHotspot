@@ -1,25 +1,27 @@
 module.exports =
-  
-  tablename: 'hotspot'
-  
+
+  tablename: 'poi'
+
   schema: true
-  
+
   attributes:
-  
+
     name:
       type: 'string'
       required: true
-      
-    location:
-      type: 'json'
-    
+
+    lat:
+      type: 'float'
+      required: true
+
+    lng:
+      type: 'float'
+      required: true
+
     createdBy:
       model: 'user'
       required: true
-    
-    tags:
+
+    tag:
       collection: 'tag'
-      via: 'hotspots'
-    
-    info:
-      type: 'json'
+      via: 'hotspot'
