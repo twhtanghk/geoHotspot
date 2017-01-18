@@ -12,8 +12,7 @@ RUN apt-get update && \
 WORKDIR $APP
 
 RUN npm install && \
-    node_modules/.bin/bower install --allow-root && \
-    node_modules/.bin/gulp
+    node_modules/.bin/bower install --allow-root
 	
 EXPOSE 1337
 
