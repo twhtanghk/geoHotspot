@@ -1,23 +1,28 @@
-argv = require('yargs').argv
+_ = require 'lodash'
 gulp = require 'gulp'
 browserify = require 'browserify'
 source = require 'vinyl-source-stream'
 coffee = require 'gulp-coffee'
 gutil = require 'gulp-util'
 sass = require 'gulp-sass'
-minifyCss = require 'gulp-minify-css'
 rename = require 'gulp-rename'
 del = require 'del'
 sh = require 'shelljs'
+fs = require 'fs'
+util = require 'util'
 
 gulp.task 'default', ['css', 'coffee']
 
-gulp.task 'css', (done) ->
+gulp.task 'config', ->
+  params = _.pick process.env, 'ROOTURL', 'MAP_KEY', 'LAT', 'LNG', 'SCOPE'
+  fs.writeFileSync 'www/js/config.json', util.inspect(params)
+
+gulp.task 'css', ->
   gulp.src './scss/ionic.app.scss'
     .pipe sass()
     .pipe gulp.dest('./www/css/')
 
-gulp.task 'coffee', ->
+gulp.task 'coffee', ['config'], ->
   browserify(entries: ['./www/js/index.coffee'])
     .transform('coffeeify')
     .transform('debowerify')
