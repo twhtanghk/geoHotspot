@@ -26,9 +26,10 @@ module.exports =
       scope:       "https://mob.myvnc.com/org/users"
       client_id:     'util.auth.dev'
   map:
-    coords:
-      latitude:   22.36633475
-      longitude:   114.08627915
+    key: 'AIzaSyBr5FgDTKlvFF7vV84rHjWd99A0pSwOXmA'
+    pos:
+      latitude: 22.36633475
+      longitude: 114.08627915
     distance:   2
     zoom:   12
     labelAnchor:   "100 0"

@@ -10,17 +10,12 @@ rename = require 'gulp-rename'
 del = require 'del'
 sh = require 'shelljs'
 
-gulp.task 'default', ['sass', 'coffee']
+gulp.task 'default', ['css', 'coffee']
 
-gulp.task 'sass', (done) ->
-  gulp.src('./scss/ionic.app.scss')
-    .pipe(sass())
-    .pipe(gulp.dest('./www/css/'))
-    .pipe(minifyCss({
-      keepSpecialComments: 0
-    } ))
-    .pipe(rename({ extname: '.min.css' } ))
-    .pipe(gulp.dest('./www/css/'))
+gulp.task 'css', (done) ->
+  gulp.src './scss/ionic.app.scss'
+    .pipe sass()
+    .pipe gulp.dest('./www/css/')
 
 gulp.task 'coffee', ->
   browserify(entries: ['./www/js/index.coffee'])

@@ -1,10 +1,9 @@
 env = require './env.coffee'
 require 'PageableAR'
 
-
 angular.module 'starter.model', ['PageableAR']
 
-  .factory 'model', (pageableAR, $filter, $http) ->
+  .factory 'resource', (pageableAR, $filter, $http) ->
 
     class User extends pageableAR.Model
       $idAttribute: 'username'
@@ -14,12 +13,7 @@ angular.module 'starter.model', ['PageableAR']
       _me = null
 
       @me: ->
-        _me ? = new User username: 'me'
-
-    class Tag extends pageableAR.Model
-      $idAttribute: 'id'
-
-      $urlRoot: "api/tag/"
+        _me ?= new User username: 'me'
 
     class Hotspot extends pageableAR.Model
       $idAttribute: 'id'
@@ -31,25 +25,6 @@ angular.module 'starter.model', ['PageableAR']
 
       $urlRoot: "api/hotspot/"
 
-    class geoHotspot extends pageableAR.Model
-      $idAttribute: '_id'
-
-      $urlRoot: "api/hotspot/"
-
-      findAddress: (coords) ->
-        $http.get "api/hotspot/findAddress", {params: coords}
-          .then (res) ->
-            ret = res.data
-          .catch alert
-
-    class MapList extends pageableAR.Collection
-      model: geoHotspot
-
-      $urlRoot: "api/hotspot/search"
-
-    User:     User
-    Tag:   Tag
-    Hotspot:   Hotspot
-    HotspotList:   HotspotList
-    MapList:   MapList
-    geoHotspot:   geoHotspot
+    User: User
+    Hotspot: Hotspot
+    HotspotList: HotspotList

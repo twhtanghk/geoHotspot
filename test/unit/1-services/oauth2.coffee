@@ -15,7 +15,6 @@ describe 'OAuth2 Services', ->
         .then (t) ->
           token = t
 
-  describe 'token', ->
     it 'verify', ->
       sails.services.oauth2
         .verify oauth2.verifyUrl, oauth2.scope, token

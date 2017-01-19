@@ -9,10 +9,17 @@ module.exports =
           "'self'"
           "http://#{host}"
           "https://#{host}"
+          "https://*.googleapis.com"
+          "https://*.gstatic.com"
         ]
         ret = csp
           directives:
             defaultSrc: src
+            styleSrc: ["'unsafe-inline'"].concat src
+            scriptSrc: [
+                "'unsafe-inline'"
+                "'unsafe-eval'"
+              ].concat src
         ret req, res, next
       order: [
         'bodyParser'
