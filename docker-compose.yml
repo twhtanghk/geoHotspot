@@ -9,7 +9,7 @@ services:
   hotspot:
     depends_on:
       - hotspot_mongo
-    image: ewnchui/geohotspot
+    image: twhtang/hotspot:api
     ports:
       - 1337
     env_file:
