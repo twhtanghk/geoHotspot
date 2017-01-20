@@ -6,8 +6,6 @@ angular.module 'starter.model', ['PageableAR']
   .factory 'resource', (pageableAR, $filter, $http) ->
 
     class User extends pageableAR.Model
-      $idAttribute: 'username'
-
       $urlRoot: "api/user/"
 
       _me = null
@@ -25,6 +23,16 @@ angular.module 'starter.model', ['PageableAR']
 
       $urlRoot: "api/hotspot/"
 
+    class Tag extends pageableAR.Model
+      $urlRoot: "api/tag/"
+
+    class TagList extends pageableAR.PageableCollection
+      model: Tag
+
+      $urlRoot = "api/tag/"
+
     User: User
     Hotspot: Hotspot
     HotspotList: HotspotList
+    Tag: Tag
+    TagList: TagList

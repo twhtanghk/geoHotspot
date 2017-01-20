@@ -15,3 +15,7 @@ module.exports =
     UserController:
       '*': false
       find: ['isAuth']
+    TagController:
+      '*': false
+      find: true
+      findOne: true

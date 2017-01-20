@@ -10,6 +10,9 @@ module.exports =
       type: 'string'
       required: true
 
+    extra:
+      type: 'json'
+
     lat:
       type: 'float'
       required: true
