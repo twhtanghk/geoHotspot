@@ -8,6 +8,13 @@ _ = require 'lodash'
 
 lib.sailsReady
   .then (sails) ->
+    Promise.all [
+      sails
+      sails.models.user.create email: process.argv[2]
+      sails.models.tag.create name: 'motorcycle'
+    ]
+  .then (res) ->
+    [sails, user, tag] = res
     data = require '../test/data/motor.json'
     Promise.all data.map (loc) ->
       _.extend loc,
@@ -17,5 +24,6 @@ lib.sailsReady
         .create loc
         .then sails.log.debug
         .catch sails.log.error
+  .catch console.log
   .finally ->
     Sails.lower()
