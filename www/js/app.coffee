@@ -3,6 +3,7 @@ _ = require 'lodash'
 window._ = _
 require 'angular-google-maps'
 require 'angular-simple-logger'
+require './templates'
 currPos = require('promised-location')
   enableHighAccracy: true
   timeout: 10000
@@ -15,11 +16,17 @@ angular
     'uiGmapgoogle-maps'
     'starter.controller'
     'starter.model'
+    'templates'
   ]
+
+  # ionic default settings
+  .config ($ionicConfigProvider) ->
+    $ionicConfigProvider.navBar.alignTitle 'left'
 
   .config (uiGmapGoogleMapApiProvider) ->
     uiGmapGoogleMapApiProvider.configure
       key: env.map.key
+      libraries: 'places'
 
   .config ($urlRouterProvider) ->
     $urlRouterProvider.otherwise '/map'
@@ -32,6 +39,11 @@ angular
         StatusBar.styleDefault()
 
   .config ($stateProvider) ->
+
+    $stateProvider.state 'app',
+      url: ""
+      abstract: true
+      templateUrl: "templates/menu.html"
 
     $stateProvider.state 'app.hotspot',
       url: "/hotspot"
@@ -46,11 +58,13 @@ angular
           ret = new cliModel.HotspotList()
           ret.$fetch({params: {sort: 'name ASC'} } )
 
-    $stateProvider.state 'map',
+    $stateProvider.state 'app.map',
       url: "/map"
       cache: false
-      templateUrl: "templates/hotspot/map.html"
-      controller: 'MapCtrl'
+      views:
+        'menuContent':
+          templateUrl: "templates/hotspot/map.html"
+          controller: 'MapCtrl'
       resolve:
         pos: ($log) ->
           currPos

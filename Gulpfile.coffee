@@ -10,6 +10,7 @@ del = require 'del'
 sh = require 'shelljs'
 fs = require 'fs'
 util = require 'util'
+templateCache = require 'gulp-angular-templatecache'
 
 gulp.task 'default', ['css', 'coffee']
 
@@ -22,13 +23,18 @@ gulp.task 'css', ->
     .pipe sass()
     .pipe gulp.dest('./www/css/')
 
-gulp.task 'coffee', ['config'], ->
+gulp.task 'coffee', ['config', 'template'], ->
   browserify(entries: ['./www/js/index.coffee'])
     .transform('coffeeify')
     .transform('debowerify')
     .bundle()
     .pipe(source('index.js'))
     .pipe(gulp.dest('./www/js/'))
+
+gulp.task 'template', ->
+  gulp.src 'www/templates/**/*.html'
+    .pipe templateCache root: 'templates', standalone: true
+    .pipe gulp.dest 'www/js'
 
 gulp.task 'clean', ->
   del [

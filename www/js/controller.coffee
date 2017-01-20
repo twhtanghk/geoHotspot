@@ -5,7 +5,7 @@ angular
   .module 'starter.controller', []
 
   .controller 'MenuCtrl', ($scope) ->
-     return
+    return
 
   .controller 'MapCtrl', ($scope, pos) ->
     _.extend $scope,
@@ -13,13 +13,13 @@ angular
         center: _.pick pos, 'latitude', 'longitude'
    
   .controller 'HotspotCtrl', ($scope, model, $location) ->
-     return
+    return
 
   .controller 'HotspotListCtrl', ($scope, collection, $location, model) ->
-     return
+    return
 
-  .controller 'SearchCtrl', (maps, collection) ->
-     return
+  .controller 'SearchCtrl', ($scope) ->
+    return
 
   .controller 'GeoCtrl', ($scope, collection, geoModel, coords, model, uiGmapGoogleMapApi, uiGmapIsReady) ->
      return
