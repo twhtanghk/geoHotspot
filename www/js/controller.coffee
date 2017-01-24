@@ -7,8 +7,9 @@ angular
   .controller 'MenuCtrl', ($scope) ->
     return
 
-  .controller 'MapCtrl', ($scope, pos) ->
+  .controller 'MapCtrl', ($scope, pos, collection) ->
     _.extend $scope,
+      collection: collection
       map:
         center: _.pick pos, 'latitude', 'longitude'
    
