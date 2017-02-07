@@ -1,7 +1,7 @@
 FROM node
 
 ENV VER=${VER:-api} \
-    REPO=https://github.com/jokyip/geoHotspot \
+    REPO=https://github.com/twhtanghk/geoHotspot \
     APP=/usr/src/app
 
 RUN apt-get update && \
