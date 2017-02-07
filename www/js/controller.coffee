@@ -1,4 +1,5 @@
 _ = require 'lodash'
+env = require './env.coffee'
 
 angular
 
@@ -24,6 +25,7 @@ angular
       collection: collection
       map:
         center: _.pick pos, 'latitude', 'longitude'
+        zoom: env.map.zoom
 
   .controller 'HotspotCtrl', ($scope, model, $location) ->
     return

@@ -10,3 +10,4 @@ module.exports =
     pos:
       latitude: parseFloat config.LAT
       longitude: parseFloat config.LNG
+    zoom: parseInt config.ZOOM
