@@ -1,6 +1,6 @@
 FROM node
 
-ENV VER=${VER:-api} \
+ENV VER=${VER:-master} \
     REPO=https://github.com/twhtanghk/geoHotspot \
     APP=/usr/src/app
 
