@@ -18,6 +18,13 @@ angular.module 'starter.model', ['PageableAR']
 
       $urlRoot: "api/hotspot/"
 
+      $parse: (data, opts) ->
+        ret = super(data, opts)
+        ret['latitude'] = ret['lat']
+        ret['longitude'] = ret['lng']
+        ret['options'] = {title: "#{ret['name']}"}
+        return ret
+
     class HotspotList extends pageableAR.PageableCollection
       model: Hotspot
 
