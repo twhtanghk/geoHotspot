@@ -20,4 +20,4 @@ Configuration
 =============
 * save docker-compose.yml and .env into local directory
 * update environment variables defined in .env
-* docker-compose -f docker-compose.xml up -d
+* docker-compose -f docker-compose.yml up -d
