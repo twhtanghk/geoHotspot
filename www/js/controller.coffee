@@ -2,17 +2,29 @@ _ = require 'lodash'
 
 angular
 
-  .module 'starter.controller', []
+  .module 'starter.controller', ['starter.model']
 
   .controller 'MenuCtrl', ($scope) ->
     return
 
-  .controller 'MapCtrl', ($scope, pos, collection) ->
+  .controller 'MapCtrl', ($scope, pos, resource) ->
+    collection = new resource.HotspotList()
+
+    get = ->
+      count = collection.models.length
+      collection
+        .$fetch()
+        .then ->
+           if count != collection.models.length
+             get()
+
+    get()
+
     _.extend $scope,
       collection: collection
       map:
         center: _.pick pos, 'latitude', 'longitude'
-   
+
   .controller 'HotspotCtrl', ($scope, model, $location) ->
     return
 

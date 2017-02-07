@@ -15,7 +15,6 @@ angular
     'ionic'
     'uiGmapgoogle-maps'
     'starter.controller'
-    'starter.model'
     'templates'
   ]
 
@@ -73,10 +72,6 @@ angular
             .catch (err) ->
               $log.error err
               env.map.pos
-        resource: 'resource'
-        collection: (resource) ->
-          ret = new resource.HotspotList()
-          ret.$fetch()
 
     $stateProvider.state 'app.createHotspot',
       url: "/hotspot/create"
