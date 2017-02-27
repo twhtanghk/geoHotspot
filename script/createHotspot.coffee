@@ -1,29 +1,36 @@
 #!/usr/bin/coffee
 
-# usage: node_modules/.bin/coffee script/createHotspot.coffee email
 Sails = require 'sails'
 lib = require './lib.coffee'
 Promise = require 'bluebird'
+path = require 'path'
 _ = require 'lodash'
+
+if process.argv.length != 4
+  console.log "usage: node_modules/.bin/coffee script/createHotspot.coffee $PWD/test/data/data.json email"
+  process.exit 1
+
+file = process.argv[2]
+tag = path.parse(file).name
+email = process.argv[3]
 
 lib.sailsReady
   .then (sails) ->
-    Promise.all [
-      sails
-      sails.models.user.create email: process.argv[2]
-      sails.models.tag.create name: 'motorcycle'
-    ]
-  .then (res) ->
-    [sails, user, tag] = res
-    data = require '../test/data/motor.json'
-    Promise.all data.map (loc) ->
-      _.extend loc,
-        createdBy: process.argv[2]
-        tag: ['motorcycle']
-      sails.models.hotspot
-        .create loc
-        .then sails.log.debug
-        .catch sails.log.error
+    Promise
+      .all [
+        sails.models.user.create email: email
+        sails.models.tag.create name: tag
+      ]
+      .then (res) ->
+        user = res[0]
+        data = require file
+        Promise.map data, (loc) ->
+          _.extend loc,
+            createdBy: email
+            tag: [tag]
+          sails.models.hotspot
+            .create loc
+            .then sails.log.debug
   .catch console.log
   .finally ->
     Sails.lower()
