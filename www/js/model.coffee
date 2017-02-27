@@ -19,10 +19,11 @@ angular.module 'starter.model', ['PageableAR']
       $urlRoot: "api/hotspot/"
 
       $parse: (data, opts) ->
+        tag = data.tag[0]?.name
         ret = super(data, opts)
         ret['latitude'] = ret['lat']
         ret['longitude'] = ret['lng']
-        ret['options'] = {title: "#{ret['name']}", icon: "img/motorcycle.png"}
+        ret['options'] = {title: "#{ret['name']}", icon: "img/#{tag}.png"}
         return ret
 
     class HotspotList extends pageableAR.PageableCollection
