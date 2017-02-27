@@ -22,7 +22,7 @@ angular.module 'starter.model', ['PageableAR']
         ret = super(data, opts)
         ret['latitude'] = ret['lat']
         ret['longitude'] = ret['lng']
-        ret['options'] = {title: "#{ret['name']}"}
+        ret['options'] = {title: "#{ret['name']}", icon: "img/motorcycle.png"}
         return ret
 
     class HotspotList extends pageableAR.PageableCollection
