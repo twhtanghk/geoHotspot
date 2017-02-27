@@ -26,6 +26,18 @@ angular
       map:
         center: _.pick pos, 'latitude', 'longitude'
         zoom: env.map.zoom
+        window:
+          options:
+            pixelOffset:
+              height: -25
+              width: 0
+          show: false
+          close: ->
+            @show = false
+        markersEvents:
+          click: (marker, eventName, model) ->
+            $scope.map.window.model = model
+            $scope.map.window.show = true
 
   .controller 'HotspotCtrl', ($scope, model, $location) ->
     return

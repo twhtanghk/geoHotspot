@@ -26,6 +26,11 @@ angular.module 'starter.model', ['PageableAR']
         ret['options'] = {title: "#{ret['name']}", icon: "img/#{tag}.png"}
         return ret
 
+      info: ->
+        ret = _.pick @, 'name'
+        ret = _.extend ret, @extra
+        JSON.stringify ret
+
     class HotspotList extends pageableAR.PageableCollection
       model: Hotspot
 
