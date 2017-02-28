@@ -4,6 +4,7 @@ window._ = _
 require 'angular-google-maps'
 require 'angular-simple-logger'
 require './templates'
+require 'log_toast'
 currPos = require('promised-location')
   enableHighAccracy: true
   timeout: 10000
@@ -16,6 +17,7 @@ angular
     'uiGmapgoogle-maps'
     'starter.controller'
     'templates'
+    'logToast'
   ]
 
   # ionic default settings
