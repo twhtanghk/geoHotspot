@@ -7,6 +7,7 @@ module.exports =
         host = req.headers['x-forwarded-host'] || req.headers['host']
         src = [
           "'self'"
+          "data:"
           "http://#{host}"
           "https://#{host}"
           "https://*.googleapis.com"
