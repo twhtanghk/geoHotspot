@@ -6,14 +6,24 @@
   "keywords": [],
   "dependencies": {
     "bluebird": "^3.3.4",
+    "gulp-concat": "^2.6.1",
+    "gulp-css-whitespace": "^0.1.2",
+    "gulp-rework": "^1.2.0",
     "helmet-csp": "^2.3.0",
     "lodash": "^4.17.4",
+    "log_toast": "0.0.6",
     "needle": "^1.4.3",
     "passport": "^0.3.2",
     "passport-http-bearer": "^1.0.1",
+    "rework-bower": "0.0.1",
+    "rework-calc": "^1.1.0",
+    "rework-import": "^2.1.0",
+    "rework-npm": "^1.0.0",
+    "rework-vars": "^3.1.1",
     "sails": "^0.12.11",
     "sails-hook-requestlogger-file": "^2.0.5",
-    "sails-mongo": "^0.12.2"
+    "sails-mongo": "^0.12.2",
+    "streamqueue": "^1.1.1"
   },
   "scripts": {
     "debug": "node debug app.js",
