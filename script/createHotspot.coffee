@@ -16,21 +16,28 @@ email = process.argv[3]
 
 lib.sailsReady
   .then (sails) ->
+    newUser = email: email
+    newTag = name: tag
     Promise
       .all [
-        sails.models.user.create email: email
-        sails.models.tag.create name: tag
+        sails.models.user.findOrCreate newUser, newUser
+        sails.models.tag.findOrCreate newTag, newTag
       ]
       .then (res) ->
         user = res[0]
         data = require file
-        Promise.map data, (loc) ->
-          _.extend loc,
-            createdBy: email
-            tag: [tag]
-          sails.models.hotspot
-            .create loc
-            .then sails.log.debug
+        Promise
+          .map data, (loc) ->
+            name: loc.name
+            coordinates: [parseFloat(loc.lng), parseFloat(loc.lat)]
+            extra: loc.extra
+          .map (loc) ->
+            _.extend loc,
+              createdBy: email
+              tag: [tag]
+            sails.models.hotspot
+              .create loc
+              .then sails.log.debug
   .catch console.log
   .finally ->
     Sails.lower()
