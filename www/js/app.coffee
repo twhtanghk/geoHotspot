@@ -72,7 +72,6 @@ angular
             .then (pos) ->
               pos.coords
             .catch (err) ->
-              $log.error err
               env.map.pos
 
     $stateProvider.state 'app.createHotspot',
@@ -87,7 +86,6 @@ angular
         cliModel: 'model'
         model: (cliModel) ->
           ret = new cliModel.Hotspot()
-
 
     $stateProvider.state 'app.editHotspot',
       url: "/hotspot/edit/:id"
