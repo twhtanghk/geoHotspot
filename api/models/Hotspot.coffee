@@ -33,13 +33,23 @@ module.exports =
       collection: 'tag'
       via: 'hotspot'
 
-  findByBounds: (bounds, where = {}, skip = 0, limit = 10) ->
+  findByBox: (box, where = {}, skip = 0, limit = 10) ->
     @nativeAsync()
       .then (hotspot) =>
+        center = [(box[0][0] + box[1][0]) / 2, (box[0][1] + box[1][1]) / 2]
+        where = _.extend where,
+          coordinates:
+            $near: 
+              $geometry:
+                type: 'Point'
+                coordinates: center
+          coordinates:
+            $geoWithin:
+              $box: box
         hotspot = Promise.promisifyAll hotspot
         results = new Promise (resolve, reject) ->
           hotspot
-            .find _.extend(where, coordinates: $geoWithin: $box: bounds), {id: true}
+            .find where, {id: true}
             .skip skip
             .limit limit
             .toArray (err, results) ->
