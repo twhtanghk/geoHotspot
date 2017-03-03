@@ -18,7 +18,7 @@ angular
       collection
         .$fetch params: _.extend limit: 100, box.toJSON()
         .then ->
-           if collection.state.count > collection.models.length
+           if collection.state.count > collection.inside(box).length
              get box
 
     _.extend $scope,

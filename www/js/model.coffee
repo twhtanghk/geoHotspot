@@ -36,6 +36,22 @@ angular.module 'starter.model', ['PageableAR']
 
       $urlRoot: "api/hotspot/"
 
+      # split loaded models into 2 sets {inside: [...], outside: [...]}
+      split: (bounds) ->
+        ret = _.groupBy @models, (hotspot) ->
+          loc = hotspot.coordinates
+          if bounds.contains new google.maps.LatLng loc[1], loc[0]
+            'inside'
+          else
+            'outside'
+        _.defaults ret, {inside: [], outside: []}
+
+      inside: (bounds) ->
+        @split(bounds).inside
+
+      outside: (bounds) ->
+        @split(bounds).outside
+
     class Tag extends pageableAR.Model
       $urlRoot: "api/tag/"
 
