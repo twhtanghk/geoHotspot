@@ -3,23 +3,23 @@ env = require './env.coffee'
 
 angular
 
-  .module 'starter.controller', ['starter.model']
+  .module 'starter.controller', [
+    'starter.model'
+  ]
 
   .controller 'MenuCtrl', ($scope) ->
     return
 
-  .controller 'MapCtrl', ($scope, pos, resource) ->
+  .controller 'MapCtrl', ($scope, pos, resource, $log) ->
+
     collection = new resource.HotspotList()
 
-    get = ->
-      count = collection.models.length
+    get = (box) ->
       collection
-        .$fetch()
+        .$fetch params: _.extend limit: 100, box.toJSON()
         .then ->
-           if count != collection.models.length
-             get()
-
-    get()
+           if collection.state.count > collection.models.length
+             get box
 
     _.extend $scope,
       collection: collection
@@ -34,6 +34,11 @@ angular
           show: false
           close: ->
             @show = false
+        markerControl: {}
+        events:
+          idle: (viewport) ->
+            collection.state.skip = 0
+            get viewport.getBounds()
         markersEvents:
           click: (marker, eventName, model) ->
             $scope.map.window.model = model
@@ -44,12 +49,6 @@ angular
 
   .controller 'HotspotListCtrl', ($scope, collection, $location, model) ->
     return
-
-  .controller 'SearchCtrl', ($scope) ->
-    return
-
-  .controller 'GeoCtrl', ($scope, collection, geoModel, coords, model, uiGmapGoogleMapApi, uiGmapIsReady) ->
-     return
 
   .filter 'HotspotFilter', ->
     (hotspots, search) ->
