@@ -5,10 +5,13 @@ require 'angular-google-maps'
 require 'angular-simple-logger'
 require './templates'
 require 'log_toast'
-currPos = require('promised-location')
+
+opts =
   enableHighAccracy: true
   timeout: 10000
   maximumAge: 60000
+Promise = require 'bluebird'
+currPos = require('promised-location')(opts, Promise)
 
 angular
 
