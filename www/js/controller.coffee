@@ -1,10 +1,12 @@
 _ = require 'lodash'
 env = require './env.coffee'
+require './event.coffee'
 
 angular
 
   .module 'starter.controller', [
     'starter.model'
+    'starter.event'
   ]
 
   .controller 'MenuCtrl', ($scope) ->
@@ -39,6 +41,8 @@ angular
           idle: (viewport) ->
             collection.state.skip = 0
             get viewport.getBounds()
+          tapHold: (map, event, loc) ->
+            $log.info JSON.stringify loc[0]
         markersEvents:
           click: (marker, eventName, model) ->
             $scope.map.window.model = model
