@@ -1,3 +1,5 @@
+Promise = require 'bluebird'
+
 angular
 
   .module 'starter.event', ['uiGmapgoogle-maps']
