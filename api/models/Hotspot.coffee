@@ -3,7 +3,7 @@ Promise = require 'bluebird'
 
 module.exports =
 
-  tablename: 'poi'
+  tableName: 'poi'
 
   schema: true
 
